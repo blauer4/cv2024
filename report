@@ -1,0 +1,5 @@
+16/04
+    Guardato le tecniche possibili per la calibrazione, consigliano il metodo della scacchiera come accuracy elevata.
+    Probabilmente l'utilizzo di più frame porta a risultati migliori.
+    Non è necessario che la scacchiera sia completamente visibile per openCV prende i punti interni(intersezioni tra quadrati neri).
+    
