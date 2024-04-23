@@ -9,6 +9,7 @@ __pycache__/
 #my files
 *.pdf
 appunti
+samples/
 
 # Distribution / packaging
 .Python
