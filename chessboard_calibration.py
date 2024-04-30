@@ -2,15 +2,16 @@ import numpy as np
 import cv2
 import os
 import re
+import datetime as dt
 
 all_chessboard_sizes = [(5, 7), (5, 7), (5, 7), (5, 7), (6, 9), (6, 9), (5, 7), (6, 9), (6, 9), (0, 0), (6, 9), (5, 7),
                         (5, 7)]
 
-abs_dir_path = "../scacchiere/"
-camera_number = "13F"
+abs_dir_path = "scacchiere/"
+camera_number = "8F"
 frame_count = 0
-# Set the frame skip interval (1 frame every 30)
-frame_skip = 15
+# Set the frame skip interval 
+frame_skip = 30
 # Open the video file
 video_capture = cv2.VideoCapture(f'{abs_dir_path}out{camera_number}.mp4')
 
@@ -32,9 +33,10 @@ objp[:, :2] = np.mgrid[0:CHESS_WIDTH, 0:CHESS_HEIGHT].T.reshape(-1, 2)
 objpoints = []  # 3d point in real world space
 imgpoints = []  # 2d points in image plane.
 
+##Do we need it?
 # Termination criteria for the iterative algorithm
-termination_criteria = (cv2.TERM_CRITERIA_EPS +
-                        cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+# termination_criteria = (cv2.TERM_CRITERIA_EPS +
+#                        cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
 # Print the number of frames in the video
 # numberOf_frame = int(video_capture.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -53,6 +55,10 @@ for file in os.listdir(output_dir):
 # Dictionary to keep track of the number of frames saved for each quadrant
 quadrant_frame_count = {0: 0, 1: 0, 2: 0, 3: 0}
 cosa = 0
+
+now = dt.datetime.now()
+timestamp = now.time()
+print(timestamp)
 while True:
     # Read a frame from the video
     ret, img = video_capture.read()
@@ -63,6 +69,7 @@ while True:
     # if frame_count % frame_skip == 0:
     # if frame_count in [200, 202, 230]:
     if frame_count % frame_skip == 0:
+        print(frame_count)
         # Resize the frame to the new_resolution
         real_img = img
 
@@ -100,8 +107,12 @@ while True:
                 cosa += 1
                 chessboard_centers = np.append(chessboard_centers, new_center, axis=1)
                 cv2.imwrite(frame_filename, img)
+    if cosa > 20:
+        break
     frame_count += 1
 # print(chessboard_centers, cosa)
+print(timestamp.microsecond - now.time().microsecond)
 video_capture.release()
 cv2.destroyAllWindows()
 print("Camera", camera_number, "done!")
+
