@@ -12,7 +12,7 @@ appunti
 samples/
 scacchiere/
 videos/
-corners.json
+*.json
 
 # Distribution / packaging
 .Python
