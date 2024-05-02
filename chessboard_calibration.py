@@ -11,7 +11,7 @@ abs_dir_path = "scacchiere/"
 camera_number = "8F"
 frame_count = 0
 # Set the frame skip interval 
-frame_skip = 30
+frame_skip = 5
 # Open the video file
 video_capture = cv2.VideoCapture(f'{abs_dir_path}out{camera_number}.mp4')
 
