@@ -3,6 +3,7 @@ import cv2
 import os
 import re
 import datetime as dt
+import util
 
 all_chessboard_sizes = [(5, 7), (5, 7), (5, 7), (5, 7), (6, 9), (6, 9), (5, 7), (6, 9), (6, 9), (0, 0), (6, 9), (5, 7),
                         (5, 7)]
@@ -11,7 +12,7 @@ abs_dir_path = "scacchiere/"
 camera_number = "8F"
 frame_count = 0
 # Set the frame skip interval 
-frame_skip = 5
+frame_skip = 10
 # Open the video file
 video_capture = cv2.VideoCapture(f'{abs_dir_path}out{camera_number}.mp4')
 
@@ -24,6 +25,9 @@ chessboard_size = all_chessboard_sizes[int(re.search("\d*", camera_number)[0]) -
 CHESS_WIDTH = chessboard_size[0]
 CHESS_HEIGHT = chessboard_size[1]
 VIDEO_NAME = 'out' + camera_number
+#variables for cornersSubPix method
+subpix_window = (5,5) #TO TEST WHAT IS A GOOD VALUE
+subpix_tc = (cv2.TERM_CRITERIA_COUNT + cv2.TERM_CRITERIA_EPS, 15, 0.01) #max iterative count set to 15, accuracy set to 0.01
 
 # prepare object points, like (0,0,0), (1,0,0), (2,0,0), ...(6,5,0)
 objp = np.zeros((CHESS_WIDTH * CHESS_HEIGHT, 3), np.float32)
@@ -33,10 +37,6 @@ objp[:, :2] = np.mgrid[0:CHESS_WIDTH, 0:CHESS_HEIGHT].T.reshape(-1, 2)
 objpoints = []  # 3d point in real world space
 imgpoints = []  # 2d points in image plane.
 
-##Do we need it?
-# Termination criteria for the iterative algorithm
-# termination_criteria = (cv2.TERM_CRITERIA_EPS +
-#                        cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
 
 # Print the number of frames in the video
 # numberOf_frame = int(video_capture.get(cv2.CAP_PROP_FRAME_COUNT))
@@ -52,13 +52,15 @@ chessboard_centers = np.array([[]])
 for file in os.listdir(output_dir):
     os.remove(os.path.join(output_dir, file))
 
-# Dictionary to keep track of the number of frames saved for each quadrant
-quadrant_frame_count = {0: 0, 1: 0, 2: 0, 3: 0}
+# initialize dictionary where we will store the camera matrix
+json_camera_matrix = {}
+
 cosa = 0
 
 now = dt.datetime.now()
 timestamp = now.time()
-print(timestamp)
+print(timestamp.microsecond)
+
 while True:
     # Read a frame from the video
     ret, img = video_capture.read()
@@ -70,13 +72,11 @@ while True:
     # if frame_count in [200, 202, 230]:
     if frame_count % frame_skip == 0:
         print(frame_count)
-        # Resize the frame to the new_resolution
-        real_img = img
 
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
         # Find the chessboard corners
-        found_corners, corners = cv2.findChessboardCorners(gray, (CHESS_WIDTH, CHESS_HEIGHT), None)
+        found_corners, corners = cv2.findChessboardCorners(gray, (CHESS_WIDTH, CHESS_HEIGHT), None, flags= cv2.CALIB_CB_FAST_CHECK)
         # print("Frame ", frame_count, ":", found_corners)
 
         # If found, add object points, image points, and save frames for each quadrant
@@ -103,16 +103,44 @@ while True:
                     skip = True
                     break
             if not skip:
+                print("saving images and appending corners")
                 frame_filename = os.path.join(output_dir, f"chessboard{cosa}.jpg")
                 cosa += 1
+                ##TO REMOVE
+                frame_skip = 40
+                ##
                 chessboard_centers = np.append(chessboard_centers, new_center, axis=1)
                 cv2.imwrite(frame_filename, img)
+                #computing sub pixels for better results
+                sub_corners = cv2.cornerSubPix(gray, corners, subpix_window, (-1,-1), subpix_tc) 
+                imgpoints.append(sub_corners)
+                #adding objpoints
+                objpoints.append(objp)
     if cosa > 20:
         break
     frame_count += 1
-# print(chessboard_centers, cosa)
-print(timestamp.microsecond - now.time().microsecond)
+final_timestamp = dt.datetime.now()
+print(final_timestamp.time().microsecond - timestamp.microsecond)
 video_capture.release()
 cv2.destroyAllWindows()
+
+camera_tc = (cv2.TERM_CRITERIA_EPS,0.005)
+
+print(imgpoints[0])
+#imgpoints is an array of an array of the detected points on the image
+ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, camera_tc)
+print(f"ret:{ret}\nmtx:{mtx}\ndist:{dist}\nrvecs:{rvecs}\ntvecs:{tvecs}")
+
+json_camera_matrix = {
+    f'{camera_number}_F' : {
+        'ret' : ret,
+        'mtx' : mtx.tolist(),
+        'dist': dist.tolist(),
+        'rvecs' : [rvecs[0].tolist(), rvecs[1].tolist()],
+        'tvecs' : [tvecs[0].tolist(), tvecs[1].tolist()]
+    }
+}
+util.saveToJSON(json_camera_matrix, camera_number)
+
 print("Camera", camera_number, "done!")
 
