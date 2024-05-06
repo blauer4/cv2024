@@ -2,13 +2,11 @@
     Guardato le tecniche possibili per la calibrazione, consigliano il metodo della scacchiera come accuracy elevata.
     Probabilmente l'utilizzo di più frame porta a risultati migliori.
     Non è necessario che la scacchiera sia completamente visibile per openCV prende i punti interni(intersezioni tra quadrati neri).
-30/04
-	salvataggio corners in JSON. Usa la funzione saveToJSON
+30/04 - 5/05
+	salvataggio corners in JSON. Usa la funzione saveToJSON //DONE
 		formato tipo 1_210: [[0,0],[20,45]....]
 
- 	terrei numero minimo di frame 20, nell'8F i frame presi non sono ottimali. 
- 	
-    Idea algoritmo per ottimizzare la ricerca:
+    Idea algoritmo per ottimizzare la ricerca: //TO DO
     supponendo che in tutti i video la schacchiera si muove in tutto lo spazio della telecamera lungo l'intero video(e non per esempio solo i primi 10 secondi)
     ha più senso effettuare la ricerca di diverse immagini lungo l'intera registrazione, quindi impostando l'offset dei frame ad un valore elevato, e accettando la prima corrispondenza che risulta. Questo perchè riduciamo la possibilità di trovare immagini da sckippare perchè troppo vicine, e anche di guardare potenzialmente l'intero video.
     Ci sono sicuramente tecniche migliori, testerò in futuro
@@ -16,3 +14,10 @@
         #frame / 20 skip interval
         poi ogni 5 frame finchè non ne trova uno
         calcolo distanza e confronto, decido se tenere o no.
+
+
+
+    Introduzione FAST_CHECK flag sulla findChessBoardCorners, accelera nei casi in cui la scacchiera non venga identificata //DONE
+    Introduzione terminationCriteria sulla calibrateCamera //TO DO
+    Introduzione cornersSubpix poichè suggerito nel caso di calibrazione con immagini multiple //TO DO and TEST
+    Miglioramento codice con CheckChessboard() il quale potrebbe skippare l'uso di findChessBoardCorners nel caso la scacchiera non venga rilevata
