@@ -18,6 +18,10 @@
 
 
     Introduzione FAST_CHECK flag sulla findChessBoardCorners, accelera nei casi in cui la scacchiera non venga identificata //DONE
-    Introduzione terminationCriteria sulla calibrateCamera //TO DO
-    Introduzione cornersSubpix poichè suggerito nel caso di calibrazione con immagini multiple //TO DO and TEST
+    Introduzione terminationCriteria sulla calibrateCamera //DONE
+    Introduzione cornersSubpix poichè suggerito nel caso di calibrazione con immagini multiple //DONE
     Miglioramento codice con CheckChessboard() il quale potrebbe skippare l'uso di findChessBoardCorners nel caso la scacchiera non venga rilevata
+
+9/05
+    Testare perchè non rileva nulla sulla 13
+    Sposta il lavoro fatto su python 

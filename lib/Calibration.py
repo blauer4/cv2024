@@ -1,22 +1,6 @@
-import numpy as np
-import json
 import cv2
+import numpy as np
 import os
-
-def create2DArray(start_val, end_val):
-    chess_2d_array = []
-    val = np.arange(start_val,end_val)
-    for a in val:
-        for b in val:
-            chess_2d_array.append([a,b])
-    return chess_2d_array
-
-#corners: quello che ti dà la findChessboardCorners
-def saveToJSON(dict, camera_number):
-    with open(f"{camera_number}Fcorners.json", "a+") as outfile:
-        json.dump(dict, outfile)
-        return True
-    return False
 
 class Calibration:
     """
@@ -35,10 +19,11 @@ class Calibration:
         self.img_number = 0
 
 
-    def extractCorners(self, img, output_dir, subpix_window = (5,5), subpix_tc = (cv2.TERM_CRITERIA_COUNT + cv2.TERM_CRITERIA_EPS, 15, 0.01)):
-        if hasattr(self, 'chessboard_centers'):
+    def extractCorners(self, img, output_dir:str, subpix_window = (5,5), subpix_tc = (cv2.TERM_CRITERIA_COUNT + cv2.TERM_CRITERIA_EPS, 15, 0.01)):
+        if not hasattr(self, 'chessboard_centers'):
             self.chessboard_centers = np.array([[]])
 
+        chessboard_centers = self.chessboard_centers
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
         # Find the chessboard corners
@@ -80,8 +65,7 @@ class Calibration:
             return (False, None)
                 
 
-    #aim to extract at max 50 images
-    def fastCalibrationImageSearch(self, funct= extractCorners, output_dir = 'samples/', skip_step = 2):
+    def fastCalibrationImageSearch(self, funct= None, output_dir = 'samples', skip_step = 2, batch_size=3):
         """
         Compute the search of images and chessboard corners of the video
             - funct: a method which implement a criteria for searching in a frame.
@@ -89,15 +73,21 @@ class Calibration:
                 - result: - the data to be saved in a dict form 
             - output_dir: the directory where saving the calbration frames
             - skip_step: how many frames skip in the accurate phase of search
+            - batch_size: how many frames I want to save before doing a big skip
+                -Try to not put this number too big, cause it will basically scan all the frames 
+                with only the "skip_step"
         Returns:
             - the list of imgpoints
         """
+        if funct is None:
+            funct = self.extractCorners
+
         imgpoints = []
         big_skip = int(self.total_frame_number / 25) 
         frame_number = self.frame_number
         
-        print(f"{frame_number}, {self.total_frame_number}")
-        
+        #print(f"{frame_number}, {self.total_frame_number}")
+        count = 0
         while frame_number < self.total_frame_number:
             
             ret, img = self.video_capture.read()
@@ -106,9 +96,10 @@ class Calibration:
 
             small_count = 0
             #start with a small skip step until you don't found 2 good corrispondence
-            while small_count < 2:
+            while small_count < batch_size:
                 if frame_number % skip_step == 0:
                     funct_ret, corners = funct(img, output_dir)
+                    count += 1
                     if funct_ret:
                         print(f'find one: {frame_number}')
                         small_count+=1
@@ -120,13 +111,14 @@ class Calibration:
             if not ret:
                 break
             #then jump to the next big frame skip
+            print(f'starting big skip of {big_skip}: {frame_number}')
             for i in range(big_skip):
-                print(f'starting big skip of {big_skip}: {frame_number}')
                 ret, img = self.video_capture.read()
                 if not ret:
                     break
                 frame_number += 1
-                print(f'frame after skip: {frame_number}')
+            print(f'frame after skip: {frame_number}')
         print(f"video corners search ended, saving images to {output_dir}")
         self.imgpoints = imgpoints
+        print(f"frames analyzed: {count}")
         return imgpoints
