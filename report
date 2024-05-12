@@ -22,6 +22,8 @@
     Introduzione cornersSubpix poichè suggerito nel caso di calibrazione con immagini multiple //DONE
     Miglioramento codice con CheckChessboard() il quale potrebbe skippare l'uso di findChessBoardCorners nel caso la scacchiera non venga rilevata
 
-9/05
+9- 12/05
     Testare perchè non rileva nulla sulla 13
     Sposta il lavoro fatto su python 
+
+    Testati i vari flag sulla findChessBoardCorners(), a quanto pare solo la fast check non basta ma non serve nemmeno usare tutti i flag, così da velocizzare il processo

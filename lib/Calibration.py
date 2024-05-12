@@ -19,7 +19,10 @@ class Calibration:
         self.img_number = 0
 
 
-    def extractCorners(self, img, output_dir:str, subpix_window = (5,5), subpix_tc = (cv2.TERM_CRITERIA_COUNT + cv2.TERM_CRITERIA_EPS, 15, 0.01)):
+    def extractCorners(self, img, output_dir:str,
+                        subpix_window = (5,5),
+                        subpix_tc = (cv2.TERM_CRITERIA_COUNT + cv2.TERM_CRITERIA_EPS, 15, 0.01),
+                        find_flags = cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_NORMALIZE_IMAGE + cv2.CALIB_CB_FAST_CHECK ):
         if not hasattr(self, 'chessboard_centers'):
             self.chessboard_centers = np.array([[]])
 
@@ -27,7 +30,7 @@ class Calibration:
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
         # Find the chessboard corners
-        found_corners, corners = cv2.findChessboardCorners(gray, (self.chess_width, self.chess_height), None, flags= cv2.CALIB_CB_FAST_CHECK)
+        found_corners, corners = cv2.findChessboardCorners(gray, (self.chess_width, self.chess_height), None, flags= find_flags)
         # print("Frame ", frame_count, ":", found_corners)
 
         # If found, add object points, image points, and save frames for each quadrant
