@@ -3,13 +3,13 @@ import cv2
 import os
 import re
 import datetime as dt
-import util
+import lib.util as util
 
 all_chessboard_sizes = [(5, 7), (5, 7), (5, 7), (5, 7), (6, 9), (6, 9), (5, 7), (6, 9), (6, 9), (0, 0), (6, 9), (5, 7),
                         (5, 7)]
 
-abs_dir_path = "scacchiere/"
-camera_number = "8F"
+abs_dir_path = "videos/"
+camera_number = "1F"
 frame_count = 0
 # Set the frame skip interval 
 frame_skip = 10
@@ -76,7 +76,7 @@ while True:
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
         # Find the chessboard corners
-        found_corners, corners = cv2.findChessboardCorners(gray, (CHESS_WIDTH, CHESS_HEIGHT), None, flags= cv2.CALIB_CB_FAST_CHECK)
+        found_corners, corners = cv2.findChessboardCorners(gray, (CHESS_WIDTH, CHESS_HEIGHT), None, flags= cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_NORMALIZE_IMAGE + cv2.CALIB_CB_FAST_CHECK)
         # print("Frame ", frame_count, ":", found_corners)
 
         # If found, add object points, image points, and save frames for each quadrant
@@ -106,9 +106,6 @@ while True:
                 print("saving images and appending corners")
                 frame_filename = os.path.join(output_dir, f"chessboard{cosa}.jpg")
                 cosa += 1
-                ##TO REMOVE
-                frame_skip = 40
-                ##
                 chessboard_centers = np.append(chessboard_centers, new_center, axis=1)
                 cv2.imwrite(frame_filename, img)
                 #computing sub pixels for better results
