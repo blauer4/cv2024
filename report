@@ -24,6 +24,11 @@
 
 9- 12/05
     Testare perchè non rileva nulla sulla 13
-    Sposta il lavoro fatto su python 
+    Spostato il lavoro fatto su python 
 
     Testati i vari flag sulla findChessBoardCorners(), a quanto pare solo la fast check non basta ma non serve nemmeno usare tutti i flag, così da velocizzare il processo
+    
+13 - 14/05
+    Implementato su python
+    Testato e calcolato le immagini corrette dalla distorsione, con e senza il ricalcolo della "camera matrix"
+    

@@ -8,21 +8,22 @@ class Calibration:
         - path: is the path to the video to analize
         - width: is the number of columns of the chessboard present in the "path" video
         - height: is the number of rows of the chessboard present in the "path" video
+        - size: is the size of the video frames express as (width, height)
     """
     def __init__(self, path, width, height) -> None:
         self.video_capture = cv2.VideoCapture(filename=path)
         self.total_frame_number = int(self.video_capture.get(cv2.CAP_PROP_FRAME_COUNT))
+        self.size = (int(self.video_capture.get(4)), int(self.video_capture.get(3)))
         self.chess_width = width
         self.chess_height = height
         
         self.frame_number = 0
         self.img_number = 0
 
-
     def extractCorners(self, img, output_dir:str,
                         subpix_window = (5,5),
                         subpix_tc = (cv2.TERM_CRITERIA_COUNT + cv2.TERM_CRITERIA_EPS, 15, 0.01),
-                        find_flags = cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_NORMALIZE_IMAGE + cv2.CALIB_CB_FAST_CHECK ):
+                        find_flags = cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_FAST_CHECK ):
         if not hasattr(self, 'chessboard_centers'):
             self.chessboard_centers = np.array([[]])
 
@@ -68,9 +69,9 @@ class Calibration:
             return (False, None)
                 
 
-    def fastCalibrationImageSearch(self, funct= None, output_dir = 'samples', skip_step = 2, batch_size=3):
+    def fastImagesSearch(self, funct= None, output_dir = 'samples', skip_step = 2, batch_size=3, release_video= True):
         """
-        Compute the search of images and chessboard corners of the video
+        Compute the search of images and chessboard corners of the video, release the video if "release_video" is a true
             - funct: a method which implement a criteria for searching in a frame.
                 - funct_ret:  is a boolean value which tells if something has been found
                 - result: - the data to be saved in a dict form 
@@ -79,6 +80,7 @@ class Calibration:
             - batch_size: how many frames I want to save before doing a big skip
                 -Try to not put this number too big, cause it will basically scan all the frames 
                 with only the "skip_step"
+            - release_video: if True, it will release the videoCapture
         Returns:
             - the list of imgpoints
         """
@@ -86,6 +88,11 @@ class Calibration:
             funct = self.extractCorners
 
         imgpoints = []
+        objpoints = []
+
+        objp = np.zeros((self.chess_width * self.chess_height, 3), np.float32)
+        objp[:, :2] = np.mgrid[0:self.chess_width, 0:self.chess_height].T.reshape(-1, 2)
+
         big_skip = int(self.total_frame_number / 25) 
         frame_number = self.frame_number
         
@@ -107,6 +114,7 @@ class Calibration:
                         print(f'find one: {frame_number}')
                         small_count+=1
                         imgpoints.append(corners)
+                        objpoints.append(objp)
                 ret, img = self.video_capture.read()
                 if not ret:
                     break
@@ -124,4 +132,7 @@ class Calibration:
         print(f"video corners search ended, saving images to {output_dir}")
         self.imgpoints = imgpoints
         print(f"frames analyzed: {count}")
-        return imgpoints
+        if release_video:
+            print("releasing video")
+            self.video_capture.release()
+        return (imgpoints, objpoints)  

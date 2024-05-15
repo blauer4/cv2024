@@ -12,6 +12,7 @@ appunti
 samples/
 scacchiere/
 videos/
+undistorted/
 *.json
 
 # Distribution / packaging
