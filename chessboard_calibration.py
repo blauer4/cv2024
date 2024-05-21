@@ -9,10 +9,10 @@ import lib.Calibration as cal
 all_chessboard_sizes = [(5, 7), (5, 7), (5, 7), (5, 7), (6, 9), (6, 9), (5, 7), (6, 9), (6, 9), (0, 0), (6, 9), (5, 7),
                         (5, 7)]
 
-camera_number = "3F"
+camera_number = "2F"
 VIDEO_NAME = 'out' + camera_number
 # Set the frame skip interval 
-frame_skip = 100
+frame_skip = 10
 
 chessboard_size = all_chessboard_sizes[int(re.search("\d*", camera_number)[0]) - 1]
 
@@ -38,14 +38,15 @@ VIDEO_NAME = f'out{camera_number}.mp4'
 video_path = f'{relative_path}{VIDEO_NAME}'
 
 video = cal.Calibration(video_path, CHESS_WIDTH, CHESS_HEIGHT)
-print(f"Number of frames in the video: {video.total_frame_number}")
+print(video)
 
 now = dt.datetime.now()
 timestamp = util.getMilliSeconds(now)
 
 #compute the corners research
-imgpoints, objpoints = video.fastImagesSearch(output_dir= output_dir, skip_step=frame_skip, release_video= False)
-
+imgpoints, objpoints = video.fastImagesSearch(funct= video.extractCorners, output_dir= output_dir, skip_step=frame_skip)
+print(f'number of corners detected: {len(imgpoints)}')
+print(f'first imgpoints: {imgpoints[0]}')
 now = dt.datetime.now()
 t2 = util.getMilliSeconds(now)
 print(f"number of seconds: {(t2-timestamp) / 1000}")
@@ -55,11 +56,11 @@ if imgpoints is []:
     exit(0)
 
 #imgpoints is an array of an array of the detected points on the image
-camera_tc = (cv2.TERM_CRITERIA_EPS, 0.0001)
-
+camera_tc = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 0.005, 50)
+print(f'tc: {camera_tc}')
 ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, video.size, None, camera_tc)
 #print(f"ret:{ret}\nmtx:{mtx}\ndist:{dist}\nrvecs:{rvecs}\ntvecs:{tvecs}")
-
+print(video.size)
 json_camera_matrix = {
         'ret' : ret,
         'mtx' : mtx.tolist(),
