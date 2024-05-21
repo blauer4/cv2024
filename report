@@ -32,3 +32,11 @@
     Implementato su python
     Testato e calcolato le immagini corrette dalla distorsione, con e senza il ricalcolo della "camera matrix"
     
+17/05
+    Testare la findChessboard se ritorna sempre lo stesso risultato //DONE
+        si
+    Testare vari ordini di input sulla camera calibration per vedere se effettivamente cambia il risultato //DONE 
+        no non cambia
+
+21/05
+    Risolto bug, larghezza e altezza dell'immagine erano invertiti sulla "chessboard_calibration"

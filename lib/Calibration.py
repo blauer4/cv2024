@@ -13,16 +13,19 @@ class Calibration:
     def __init__(self, path, width, height) -> None:
         self.video_capture = cv2.VideoCapture(filename=path)
         self.total_frame_number = int(self.video_capture.get(cv2.CAP_PROP_FRAME_COUNT))
-        self.size = (int(self.video_capture.get(4)), int(self.video_capture.get(3)))
+        self.size = (int(self.video_capture.get(3)), int(self.video_capture.get(4)))
         self.chess_width = width
         self.chess_height = height
         
         self.frame_number = 0
         self.img_number = 0
 
+    def __str__(self):
+        return f'total video frames:{self.total_frame_number}\nsize:{self.size}\nchessboard width:{self.chess_width}\nchess height:{self.chess_height}\n'
+
     def extractCorners(self, img, output_dir:str,
-                        subpix_window = (5,5),
-                        subpix_tc = (cv2.TERM_CRITERIA_COUNT + cv2.TERM_CRITERIA_EPS, 15, 0.01),
+                        subpix_window = (10,10),
+                        subpix_tc = (cv2.TERM_CRITERIA_COUNT + cv2.TERM_CRITERIA_EPS, 40, 0.01),
                         find_flags = cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_FAST_CHECK ):
         if not hasattr(self, 'chessboard_centers'):
             self.chessboard_centers = np.array([[]])
@@ -67,7 +70,43 @@ class Calibration:
 
         else:
             return (False, None)
+
+    def extractCornersNoSub(self, img, output_dir:str, find_flags = cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_FAST_CHECK ):
+        if not hasattr(self, 'chessboard_centers'):
+            self.chessboard_centers = np.array([[]])
+
+        chessboard_centers = self.chessboard_centers
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
+        # Find the chessboard corners
+        found_corners, corners = cv2.findChessboardCorners(gray, (self.chess_width, self.chess_height), None, flags= find_flags)
+        
+        # If found, add object points, image points, and save frames for each quadrant
+        if found_corners:
+            new_center = corners.mean(axis=0)
+            print(corners.mean(axis=0))
+
+            skip = False
+            for center in chessboard_centers:
+                if center.size == 0: continue
+                # We check that the points are inside a box around the center of distance dx<100
+                dx = abs(center[0] - new_center[0][0])
+                dy = abs(center[1] - new_center[0][1])
+                if dx < 100 or dy < 100:
+                    print("skipped frame because center are too near")
+                    skip = True
+                    return (False, None)
+            if not skip:
+                print("saving images to directory")
+                frame_filename = os.path.join(output_dir, f"chessboard{self.img_number}.jpg")
+                self.img_number += 1
+                chessboard_centers = np.append(chessboard_centers, new_center, axis=1)
+                cv2.imwrite(frame_filename, img)
                 
+                return (True, corners)
+
+        else:
+            return (False, None)
 
     def fastImagesSearch(self, funct= None, output_dir = 'samples', skip_step = 2, batch_size=3, release_video= True):
         """
@@ -85,7 +124,7 @@ class Calibration:
             - the list of imgpoints
         """
         if funct is None:
-            funct = self.extractCorners
+            funct = self.extractCornersNoSub
 
         imgpoints = []
         objpoints = []
