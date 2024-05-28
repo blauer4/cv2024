@@ -11,14 +11,16 @@ class Calibration:
         - size: is the size of the video frames express as (width, height)
     """
     def __init__(self, path, width, height) -> None:
+        #video info
         self.video_capture = cv2.VideoCapture(filename=path)
-        self.total_frame_number = int(self.video_capture.get(cv2.CAP_PROP_FRAME_COUNT))
         self.size = (int(self.video_capture.get(3)), int(self.video_capture.get(4)))
+        self.img_number = 0
+        self.frame_number = 0
+        self.total_frame_number = int(self.video_capture.get(cv2.CAP_PROP_FRAME_COUNT))
+        #chessboard info
         self.chess_width = width
         self.chess_height = height
         
-        self.frame_number = 0
-        self.img_number = 0
 
     def __str__(self):
         return f'total video frames:{self.total_frame_number}\nsize:{self.size}\nchessboard width:{self.chess_width}\nchess height:{self.chess_height}\n'
@@ -175,3 +177,44 @@ class Calibration:
             print("releasing video")
             self.video_capture.release()
         return (imgpoints, objpoints)  
+    
+def computeReProjError(objpoints, imgpoints, mtx, dist, rvecs, tvecs):
+        """
+        method for computing multiple reprojeciton errors.
+        It returns the average value of the reprojection errors, different from the openCv calibrateCamera ret value(which is RMSE)
+            - objpoints: list of object points in the 3D camera space
+            - imgpoints: list of image points in the 2D camera plane
+            - mtx: camera matrix (3x3)
+            - dist: distorsion values of the camera
+            - rvecs: list of rotation vectors 
+            - tvecs: list of translation vectors
+        """
+        mean_error = 0
+        for i in range(np.shape(objpoints)[0]):
+            #project the points
+            imgpoints2, _ = cv2.projectPoints(objpoints[i], rvecs[i], tvecs[i], mtx, dist)
+            #calculate the ecludian distance of all the point
+            error = cv2.norm(imgpoints[i], imgpoints2, cv2.NORM_L2)/len(imgpoints2)
+            mean_error += error/ (np.shape(objpoints)[0])
+        return mean_error
+    
+
+def computeMultiplePnP(objpoints, imgpoints, mtx, dist, flags=cv2.SOLVEPNP_ITERATIVE):
+    tvecs = []
+    rvecs = []
+    for i in range(np.shape(objpoints)[0]):
+        r, rvec, tvec = cv2.solvePnP(objpoints[i], imgpoints[i], mtx, dist, flags)
+        rvecs.append(rvec)
+        tvecs.append(tvec)
+    return (rvecs, tvecs)
+
+#Refine case of solvePnP
+def computeMultipleRefinePnP(objpoints, imgpoints, mtx, dist, rvecs, tvecs):
+    final_tvecs = []
+    final_rvecs = []
+    for i in range(np.shape(objpoints)[0]):
+        print(rvecs[i])
+        rvec, tvec = cv2.solvePnPRefineLM(objpoints[i], imgpoints[i], mtx, dist, rvecs[i], tvecs[i] ) 
+        final_rvecs.append(rvec)
+        final_tvecs.append(tvec)
+    return (final_rvecs, final_tvecs)
