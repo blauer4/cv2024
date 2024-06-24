@@ -7,6 +7,8 @@ __pycache__/
 *.so
 
 #my files
+*.xopp
+associazione-punti.xopp
 *.pdf
 appunti
 samples/
@@ -14,6 +16,7 @@ scacchiere/
 videos/
 undistorted/
 *.json
+!measures.json
 
 # Distribution / packaging
 .Python

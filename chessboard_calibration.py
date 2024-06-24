@@ -9,10 +9,10 @@ import lib.Calibration as cal
 all_chessboard_sizes = [(5, 7), (5, 7), (5, 7), (5, 7), (6, 9), (6, 9), (5, 7), (6, 9), (6, 9), (0, 0), (6, 9), (5, 7),
                         (5, 7)]
 
-camera_number = "2F"
+camera_number = "6F"
 VIDEO_NAME = 'out' + camera_number
 # Set the frame skip interval 
-frame_skip = 10
+frame_skip = 5
 
 chessboard_size = all_chessboard_sizes[int(re.search("\d*", camera_number)[0]) - 1]
 
@@ -44,7 +44,7 @@ now = dt.datetime.now()
 timestamp = util.getMilliSeconds(now)
 
 # compute the corners research
-imgpoints, objpoints = video.fastImagesSearch(funct=video.extractCorners, output_dir=output_dir, skip_step=frame_skip)
+imgpoints, objpoints = video.fastImagesSearch(funct=video.extractCorners, output_dir=output_dir, skip_step=frame_skip, batch_size= 4)
 print(f'number of corners detected: {len(imgpoints)}')
 # print(f'first imgpoints: {imgpoints[0]}')
 now = dt.datetime.now()
