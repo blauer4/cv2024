@@ -1,3 +1,5 @@
+Intrinsic parameter estimation
+
 16/04
     Guardato le tecniche possibili per la calibrazione, consigliano il metodo della scacchiera come accuracy elevata.
     Probabilmente l'utilizzo di più frame porta a risultati migliori.
@@ -40,3 +42,15 @@
 
 21/05
     Risolto bug, larghezza e altezza dell'immagine erano invertiti sulla "chessboard_calibration"
+
+extrinsic parameter estimation:
+
+workflow:
+
+1 un "camera world" comune: da cui estraggo le posizioni delle telecamere
+    - per farlo uso una "homography", che sarà il campo da pallavolo, ho bisogno di almeno 4 punti del campo con misure conosciute
+    visibili tra due telecamere
+    -calcolo la corrispondenza con tutte le telecamere del campo, opzione più rapida, confronto 2 a 2 tra telecamere dove vedo il maggior numero di punti in comune
+    -calcolo tutte le corrispondenze tra telecamere e calcolo tutte le posizioni relative tra tutte le telecamere e poi faccio la media dei parametri estrinseci che ho ottenuto
+    
+
