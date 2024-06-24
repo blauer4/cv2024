@@ -45,12 +45,28 @@ Intrinsic parameter estimation
 
 extrinsic parameter estimation:
 
-workflow:
-
-1 un "camera world" comune: da cui estraggo le posizioni delle telecamere
+Creo un "camera world" comune: da cui estraggo le posizioni delle telecamere
     - per farlo uso una "homography", che sarà il campo da pallavolo, ho bisogno di almeno 4 punti del campo con misure conosciute
     visibili tra due telecamere
-    -calcolo la corrispondenza con tutte le telecamere del campo, opzione più rapida, confronto 2 a 2 tra telecamere dove vedo il maggior numero di punti in comune
-    -calcolo tutte le corrispondenze tra telecamere e calcolo tutte le posizioni relative tra tutte le telecamere e poi faccio la media dei parametri estrinseci che ho ottenuto
     
+    - identificazione punti reali per telecamera:
+        JSON format, un punto per camera: { "P1": [u,v]}
+        JSON format, punti reali: {"P1": [x,y,0]}
+        {
+            "image_points": {
+                "out1" : {
+                    "P1" : []
+                }
+            },
+            "world_points": {
+                "P1" : []
+            }
+        }
+        x,y in metri
+        u,v in coordinate pixel 
+
+        B1: punto di origine [0.0,0.0,0.0], poichè visibile da tutte le telecamere
+        ASSUMO, distanze B2-B3 (e tutti i casi simili) di 0,95, poichè 0.9 è la distanza tra le due linee interne, distanza reale tra i due 
+        centri delle linee(presumibilmente il punto desiderato) è 0.9 + 0.025 + 0.025 = 0.95
+
 
