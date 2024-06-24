@@ -2,41 +2,43 @@ import cv2
 import numpy as np
 import os
 
+
 class Calibration:
     """
     Class for executing the chessboard calibration:
-        - path: is the path to the video to analize
+        - path: is the path to the video to analyze
         - width: is the number of columns of the chessboard present in the "path" video
         - height: is the number of rows of the chessboard present in the "path" video
         - size: is the size of the video frames express as (width, height)
     """
+
     def __init__(self, path, width, height) -> None:
-        #video info
+        # video info
+        self.imgpoints = []
+        self.chessboard_centers = np.array([[]])
         self.video_capture = cv2.VideoCapture(filename=path)
         self.size = (int(self.video_capture.get(3)), int(self.video_capture.get(4)))
         self.img_number = 0
         self.frame_number = 0
         self.total_frame_number = int(self.video_capture.get(cv2.CAP_PROP_FRAME_COUNT))
-        #chessboard info
+        # chessboard info
         self.chess_width = width
         self.chess_height = height
-        
 
     def __str__(self):
         return f'total video frames:{self.total_frame_number}\nsize:{self.size}\nchessboard width:{self.chess_width}\nchess height:{self.chess_height}\n'
 
-    def extractCorners(self, img, output_dir:str,
-                        subpix_window = (10,10),
-                        subpix_tc = (cv2.TERM_CRITERIA_COUNT + cv2.TERM_CRITERIA_EPS, 40, 0.01),
-                        find_flags = cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_FAST_CHECK ):
-        if not hasattr(self, 'chessboard_centers'):
-            self.chessboard_centers = np.array([[]])
+    def extractCorners(self, img, output_dir: str,
+                       subpix_window=(10, 10),
+                       subpix_tc=(cv2.TERM_CRITERIA_COUNT + cv2.TERM_CRITERIA_EPS, 40, 0.01),
+                       find_flags=cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_FAST_CHECK):
 
         chessboard_centers = self.chessboard_centers
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
         # Find the chessboard corners
-        found_corners, corners = cv2.findChessboardCorners(gray, (self.chess_width, self.chess_height), None, flags= find_flags)
+        found_corners, corners = cv2.findChessboardCorners(gray, (self.chess_width, self.chess_height), None,
+                                                           flags=find_flags)
         # print("Frame ", frame_count, ":", found_corners)
 
         # If found, add object points, image points, and save frames for each quadrant
@@ -45,8 +47,6 @@ class Calibration:
             new_center = corners.mean(axis=0)
             print(corners.mean(axis=0))
 
-
-            skip = False
             for center in chessboard_centers:
                 if center.size == 0: continue
                 # print(f"Center: {center[0]}, {center[1]}")
@@ -57,23 +57,23 @@ class Calibration:
                 # if ((new_center[0][0] - center[0]) ** 2 + (new_center[0][1] - center[1]) ** 2) < (1000 ** 2):
                 if dx < 100 or dy < 100:
                     print("skipped frame because center are too near")
-                    skip = True
-                    return (False, None)
-            if not skip:
-                print("saving images to directory")
-                frame_filename = os.path.join(output_dir, f"chessboard{self.img_number}.jpg")
-                self.img_number += 1
-                
-                chessboard_centers = np.append(chessboard_centers, new_center, axis=1)
-                cv2.imwrite(frame_filename, img)
-                #computing sub pixels for better results
-                sub_corners = cv2.cornerSubPix(gray, corners, subpix_window, (-1,-1), subpix_tc)
-                return (True, sub_corners)
+                    return False, None
+
+            print("saving images to directory")
+            frame_filename = os.path.join(output_dir, f"chessboard{self.img_number}.jpg")
+            self.img_number += 1
+
+            self.chessboard_centers = np.append(chessboard_centers, new_center, axis=1)
+            cv2.imwrite(frame_filename, img)
+            # computing sub pixels for better results
+            sub_corners = cv2.cornerSubPix(gray, corners, subpix_window, (-1, -1), subpix_tc)
+            return True, sub_corners
 
         else:
-            return (False, None)
+            return False, None
 
-    def extractCornersNoSub(self, img, output_dir:str, find_flags = cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_FAST_CHECK ):
+    def extractCornersNoSub(self, img, output_dir: str,
+                            find_flags=cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_FAST_CHECK):
         if not hasattr(self, 'chessboard_centers'):
             self.chessboard_centers = np.array([[]])
 
@@ -81,8 +81,9 @@ class Calibration:
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
         # Find the chessboard corners
-        found_corners, corners = cv2.findChessboardCorners(gray, (self.chess_width, self.chess_height), None, flags= find_flags)
-        
+        found_corners, corners = cv2.findChessboardCorners(gray, (self.chess_width, self.chess_height), None,
+                                                           flags=find_flags)
+
         # If found, add object points, image points, and save frames for each quadrant
         if found_corners:
             new_center = corners.mean(axis=0)
@@ -97,29 +98,29 @@ class Calibration:
                 if dx < 100 or dy < 100:
                     print("skipped frame because center are too near")
                     skip = True
-                    return (False, None)
+                    return False, None
             if not skip:
                 print("saving images to directory")
                 frame_filename = os.path.join(output_dir, f"chessboard{self.img_number}.jpg")
                 self.img_number += 1
                 chessboard_centers = np.append(chessboard_centers, new_center, axis=1)
                 cv2.imwrite(frame_filename, img)
-                
-                return (True, corners)
+
+                return True, corners
 
         else:
-            return (False, None)
+            return False, None
 
-    def fastImagesSearch(self, funct= None, output_dir = 'samples', skip_step = 2, batch_size=3, release_video= True):
+    def fastImagesSearch(self, funct=None, output_dir='samples', skip_step=2, batch_size=3, release_video=True):
         """
         Compute the search of images and chessboard corners of the video, release the video if "release_video" is a true
             - funct: a method which implement a criteria for searching in a frame.
                 - funct_ret:  is a boolean value which tells if something has been found
                 - result: - the data to be saved in a dict form 
-            - output_dir: the directory where saving the calbration frames
+            - output_dir: the directory where saving the calibration frames
             - skip_step: how many frames skip in the accurate phase of search
             - batch_size: how many frames I want to save before doing a big skip
-                -Try to not put this number too big, cause it will basically scan all the frames 
+                -Try to not put this number too big, because it will basically scan all the frames
                 with only the "skip_step"
             - release_video: if True, it will release the videoCapture
         Returns:
@@ -134,35 +135,35 @@ class Calibration:
         objp = np.zeros((self.chess_width * self.chess_height, 3), np.float32)
         objp[:, :2] = np.mgrid[0:self.chess_width, 0:self.chess_height].T.reshape(-1, 2)
 
-        big_skip = int(self.total_frame_number / 25) 
+        big_skip = int(self.total_frame_number / 25)
         frame_number = self.frame_number
-        
-        #print(f"{frame_number}, {self.total_frame_number}")
+
+        # print(f"{frame_number}, {self.total_frame_number}")
         count = 0
         while frame_number < self.total_frame_number:
-            
+
             ret, img = self.video_capture.read()
             if not ret:
                 break
 
             small_count = 0
-            #start with a small skip step until you don't found 2 good corrispondence
+            # start with a small skip step until you don't found 2 good corrispondence
             while small_count < batch_size:
                 if frame_number % skip_step == 0:
                     funct_ret, corners = funct(img, output_dir)
                     count += 1
                     if funct_ret:
                         print(f'find one: {frame_number}')
-                        small_count+=1
+                        small_count += 1
                         imgpoints.append(corners)
                         objpoints.append(objp)
                 ret, img = self.video_capture.read()
                 if not ret:
                     break
-                frame_number += 1 
+                frame_number += 1
             if not ret:
                 break
-            #then jump to the next big frame skip
+            # then jump to the next big frame skip
             print(f'starting big skip of {big_skip}: {frame_number}')
             for i in range(big_skip):
                 ret, img = self.video_capture.read()
@@ -176,28 +177,29 @@ class Calibration:
         if release_video:
             print("releasing video")
             self.video_capture.release()
-        return (imgpoints, objpoints)  
-    
+        return imgpoints, objpoints
+
+
 def computeReProjError(objpoints, imgpoints, mtx, dist, rvecs, tvecs):
-        """
-        method for computing multiple reprojeciton errors.
-        It returns the average value of the reprojection errors, different from the openCv calibrateCamera ret value(which is RMSE)
-            - objpoints: list of object points in the 3D camera space
-            - imgpoints: list of image points in the 2D camera plane
-            - mtx: camera matrix (3x3)
-            - dist: distorsion values of the camera
-            - rvecs: list of rotation vectors 
-            - tvecs: list of translation vectors
-        """
-        mean_error = 0
-        for i in range(np.shape(objpoints)[0]):
-            #project the points
-            imgpoints2, _ = cv2.projectPoints(objpoints[i], rvecs[i], tvecs[i], mtx, dist)
-            #calculate the ecludian distance of all the point
-            error = cv2.norm(imgpoints[i], imgpoints2, cv2.NORM_L2)/len(imgpoints2)
-            mean_error += error/ (np.shape(objpoints)[0])
-        return mean_error
-    
+    """
+    method for computing multiple reprojeciton errors.
+    It returns the average value of the reprojection errors, different from the openCv calibrateCamera ret value(which is RMSE)
+        - objpoints: list of object points in the 3D camera space
+        - imgpoints: list of image points in the 2D camera plane
+        - mtx: camera matrix (3x3)
+        - dist: distorsion values of the camera
+        - rvecs: list of rotation vectors
+        - tvecs: list of translation vectors
+    """
+    mean_error = 0
+    for i in range(np.shape(objpoints)[0]):
+        # project the points
+        imgpoints2, _ = cv2.projectPoints(objpoints[i], rvecs[i], tvecs[i], mtx, dist)
+        # calculate the ecludian distance of all the point
+        error = cv2.norm(imgpoints[i], imgpoints2, cv2.NORM_L2) / len(imgpoints2)
+        mean_error += error / (np.shape(objpoints)[0])
+    return mean_error
+
 
 def computeMultiplePnP(objpoints, imgpoints, mtx, dist, flags=cv2.SOLVEPNP_ITERATIVE):
     tvecs = []
@@ -206,15 +208,16 @@ def computeMultiplePnP(objpoints, imgpoints, mtx, dist, flags=cv2.SOLVEPNP_ITERA
         r, rvec, tvec = cv2.solvePnP(objpoints[i], imgpoints[i], mtx, dist, flags)
         rvecs.append(rvec)
         tvecs.append(tvec)
-    return (rvecs, tvecs)
+    return rvecs, tvecs
 
-#Refine case of solvePnP
+
+# Refine case of solvePnP
 def computeMultipleRefinePnP(objpoints, imgpoints, mtx, dist, rvecs, tvecs):
     final_tvecs = []
     final_rvecs = []
     for i in range(np.shape(objpoints)[0]):
         print(rvecs[i])
-        rvec, tvec = cv2.solvePnPRefineLM(objpoints[i], imgpoints[i], mtx, dist, rvecs[i], tvecs[i] ) 
+        rvec, tvec = cv2.solvePnPRefineLM(objpoints[i], imgpoints[i], mtx, dist, rvecs[i], tvecs[i])
         final_rvecs.append(rvec)
         final_tvecs.append(tvec)
-    return (final_rvecs, final_tvecs)
+    return final_rvecs, final_tvecs
