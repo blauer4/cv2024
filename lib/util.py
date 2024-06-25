@@ -45,6 +45,11 @@ def saveToJSON(dict: dict, camera_number: int):
         return True
     return False
 
+def saveToJSONstr(dict: dict, name: str):
+    with open(f"{name}.json", "a+") as outfile:
+        json.dump(dict, outfile)
+        return True
+    return False
 
 def LoadJSON(filepath) -> dict:
     with open(filepath, "r") as outfile:
