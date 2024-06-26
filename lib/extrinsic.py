@@ -45,7 +45,7 @@ def plot_camera(extrinsic_matrix, all_camera_coordinates, size):
     # The camera positions are in order of the camera numbers
 
     camera_position = extrinsic_matrix[:3, 3]
-
+    print(f'Calculated: {camera_position}\t{all_camera_coordinates}')
     # Plot camera location obtained from extrinsic matrix
     ax.scatter(camera_position[0], camera_position[1], camera_position[2], c="r", marker="o", label="Camera")
 
@@ -137,9 +137,8 @@ def main(arg):
     camera_matrix = np.array(camera_parameters["mtx"])
     # new_mtx does not exist in the pickle file if the image was undistorted with crop
     new_camera_matrix = None if with_crop else camera_parameters["new_mtx"]
-    distortion_coefficients = np.zeros((1, 5), dtype=np.float32)
+    distortion_coefficients = np.array(camera_parameters['dist'], dtype=np.float32)
     index = 'out' + str(camera_number)
-    print(world_points[index].shape, image_points[index].shape, camera_matrix.shape, distortion_coefficients.shape)
     if with_crop:
         success, rotation_vector, translation_vector = cv.solvePnP(
             world_points[index], image_points[index], camera_matrix, distortion_coefficients
