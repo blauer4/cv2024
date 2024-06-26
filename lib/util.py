@@ -9,7 +9,7 @@ import os
 # METHODS FOR GENERAL UTILITY
 ###
 
-def showImage(img: cv2.typing.MatLike, window_name: str):
+def showImage(img, window_name: str):
     """
     Takes an image and show it in a fixed size window, press a button to close it in the end
         - img: An image to be shown
