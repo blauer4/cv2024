@@ -9,6 +9,7 @@ __pycache__/
 #my files
 *.xopp
 associazione-punti.xopp
+checkboard_test.ipynb
 *.pdf
 appunti
 samples/
@@ -18,7 +19,6 @@ undistorted/
 *.json
 !json/*/*.json
 !measures.json
-checkboard_test.ipynb
 
 # Distribution / packaging
 .Python

@@ -9,7 +9,7 @@ import lib.Calibration as cal
 all_chessboard_sizes = [(5, 7), (5, 7), (5, 7), (5, 7), (6, 9), (6, 9), (5, 7), (6, 9), (6, 9), (0, 0), (6, 9), (5, 7),
                         (5, 7)]
 
-camera_number = "1F"
+camera_number = "4F"
 VIDEO_NAME = 'out' + camera_number
 # Set the frame skip interval 
 frame_skip = 5
@@ -99,6 +99,6 @@ json_camera_matrix = {
     'dist': dist.tolist()
 }
 
-util.saveToJSONstr(json_camera_matrix, f"{camera_number}corners_notc.json")
+util.saveToJSONstr(json_camera_matrix, f"{camera_number}corners_notc")
 
 print("Camera", camera_number, "done!")
