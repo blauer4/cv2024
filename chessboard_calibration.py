@@ -34,7 +34,7 @@ chessboard_centers = np.array([[]])
 for file in os.listdir(output_dir):
     os.remove(os.path.join(output_dir, file))
 
-relative_path = "../scacchiere/"
+relative_path = "videos/"
 VIDEO_NAME = f'out{camera_number}.mp4'
 video_path = f'{relative_path}{VIDEO_NAME}'
 
@@ -59,29 +59,46 @@ if imgpoints is []:
 
 objpoints = np.array(objpoints, dtype='float32') * SQUARE_SIZE
 # imgpoints is an array of an array of the detected points on the image
-camera_tc = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 0.005, 50)
-print(f'tc: {camera_tc}')
+camera_tc = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 500, 0.001)
+#print(f'tc: {camera_tc}')
 ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, video.size, None, None, criteria=camera_tc)
 # print(f"ret:{ret}\nmtx:{mtx}\ndist:{dist}\nrvecs:{rvecs}\ntvecs:{tvecs}")
 # print(video.size)
 print(f"ret:{ret}")
 error = cal.computeReProjError(objpoints, imgpoints, mtx, dist, rvecs, tvecs)
-print(f"std. result: {error}")
+print(f"std. error: {error}")
 
-pnp_rvecs, pnp_tvecs = cal.computeMultiplePnP(objpoints, imgpoints, mtx, dist)
-pnp_tvecs = np.array(pnp_tvecs)
-pnp_rvecs = np.array(pnp_rvecs)
-error = cal.computeReProjError(objpoints, imgpoints, mtx, dist, pnp_rvecs, pnp_tvecs)
-print(f"solvePnP. result: {error}")
+new_mtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, video.size, 1, video.size)
+error = cal.computeReProjError(objpoints, imgpoints, new_mtx, dist, rvecs, tvecs)
+print(f"new_mtx. error: {error}")
 
 json_camera_matrix = {
     'ret': ret,
     'mtx': mtx.tolist(),
-    'dist': dist.tolist(),
-    'rvecs': pnp_rvecs.tolist(),
-    'tvecs': pnp_tvecs.tolist()
+    "new_mtx": new_mtx.tolist(),
+    'dist': dist.tolist()
 }
 
 util.saveToJSON(json_camera_matrix, camera_number)
+
+print("No tc computation")
+ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, video.size, None, None)
+
+print(f"ret:{ret}")
+error = cal.computeReProjError(objpoints, imgpoints, mtx, dist, rvecs, tvecs)
+print(f"std. error: {error}")
+
+new_mtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, video.size, 1, video.size)
+error = cal.computeReProjError(objpoints, imgpoints, new_mtx, dist, rvecs, tvecs)
+print(f"new_mtx. error: {error}")
+
+json_camera_matrix = {
+    'ret': ret,
+    'mtx': mtx.tolist(),
+    "new_mtx": new_mtx.tolist(),
+    'dist': dist.tolist()
+}
+
+util.saveToJSONstr(json_camera_matrix, f"{camera_number}corners_notc.json")
 
 print("Camera", camera_number, "done!")
