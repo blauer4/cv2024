@@ -16,6 +16,7 @@ scacchiere/
 videos/
 undistorted/
 *.json
+!json/*/*.json
 !measures.json
 checkboard_test.ipynb
 
