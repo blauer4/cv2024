@@ -9,7 +9,7 @@ import lib.Calibration as cal
 all_chessboard_sizes = [(5, 7), (5, 7), (5, 7), (5, 7), (6, 9), (6, 9), (5, 7), (6, 9), (6, 9), (0, 0), (6, 9), (5, 7),
                         (5, 7)]
 
-camera_number = "6F"
+camera_number = "3F"
 VIDEO_NAME = 'out' + camera_number
 # Set the frame skip interval 
 frame_skip = 5
@@ -18,6 +18,7 @@ chessboard_size = all_chessboard_sizes[int(re.search("\d*", camera_number)[0]) -
 
 CHESS_WIDTH = chessboard_size[0]
 CHESS_HEIGHT = chessboard_size[1]
+SQUARE_SIZE = 0.028
 
 # Arrays to store object points and image points from all the images.
 objpoints = []  # 3d point in real world space
@@ -33,7 +34,7 @@ chessboard_centers = np.array([[]])
 for file in os.listdir(output_dir):
     os.remove(os.path.join(output_dir, file))
 
-relative_path = "videos/"
+relative_path = "../scacchiere/"
 VIDEO_NAME = f'out{camera_number}.mp4'
 video_path = f'{relative_path}{VIDEO_NAME}'
 
@@ -44,7 +45,8 @@ now = dt.datetime.now()
 timestamp = util.getMilliSeconds(now)
 
 # compute the corners research
-imgpoints, objpoints = video.fastImagesSearch(funct=video.extractCorners, output_dir=output_dir, skip_step=frame_skip, batch_size= 4)
+imgpoints, objpoints = video.fastImagesSearch(funct=video.extractCorners, output_dir=output_dir, skip_step=frame_skip,
+                                              batch_size=4)
 print(f'number of corners detected: {len(imgpoints)}')
 # print(f'first imgpoints: {imgpoints[0]}')
 now = dt.datetime.now()
@@ -55,10 +57,11 @@ if imgpoints is []:
     print('nothing detected.. exiting')
     exit(0)
 
+objpoints = np.array(objpoints, dtype='float32') * SQUARE_SIZE
 # imgpoints is an array of an array of the detected points on the image
 camera_tc = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 0.005, 50)
 print(f'tc: {camera_tc}')
-ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, video.size, None, camera_tc)
+ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, video.size, None, None, criteria=camera_tc)
 # print(f"ret:{ret}\nmtx:{mtx}\ndist:{dist}\nrvecs:{rvecs}\ntvecs:{tvecs}")
 # print(video.size)
 print(f"ret:{ret}")
