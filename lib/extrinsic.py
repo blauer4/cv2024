@@ -26,7 +26,7 @@ def import_coordinates():
                 world_points_ret[camera].append(world_points[point])
             image_points_ret[camera] = np.array(image_points_ret[camera], dtype=np.float32)
             world_points_ret[camera] = np.array(world_points_ret[camera], dtype=np.float32)
-            # print(image_points_ret[camera].shape, world_points_ret[camera].shape)
+            # print(image_points_ret[camera].shape, world_points_ret[camera])
 
     # print(world_points_ret, image_points_ret)
 
@@ -134,7 +134,7 @@ def main(arg):
     for x in all_camera_coordinates:
         all_camera_coordinates[x] = np.array(all_camera_coordinates[x], dtype=np.float32)
 
-    camera_matrix = np.array(camera_parameters["mtx"])
+    camera_matrix = np.array(camera_parameters["new_mtx"])
     # new_mtx does not exist in the pickle file if the image was undistorted with crop
     new_camera_matrix = None if with_crop else camera_parameters["new_mtx"]
     distortion_coefficients = np.array(camera_parameters['dist'], dtype=np.float32)
@@ -175,6 +175,9 @@ def main(arg):
 
     size = args.size if args.size else 10
     plot_camera(extrinsic_matrix, all_camera_coordinates, size)
+
+    with open(f"extrinsic_matrix_{camera_number}.json", "w") as file:
+        json.dump(extrinsic_matrix.tolist(), file)
 
 
 if __name__ == "__main__":
