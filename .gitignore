@@ -17,6 +17,7 @@ videos/
 undistorted/
 *.json
 !measures.json
+checkboard_test.ipynb
 
 # Distribution / packaging
 .Python
