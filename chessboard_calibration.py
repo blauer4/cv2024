@@ -14,7 +14,7 @@ VIDEO_NAME = 'out' + camera_number
 # Set the frame skip interval 
 frame_skip = 5
 
-chessboard_size = all_chessboard_sizes[int(re.search("\d*", camera_number)[0]) - 1]
+chessboard_size = all_chessboard_sizes[int(re.search(r"\d*", camera_number)[0]) - 1]
 
 CHESS_WIDTH = chessboard_size[0]
 CHESS_HEIGHT = chessboard_size[1]
@@ -69,14 +69,17 @@ error = cal.computeReProjError(objpoints, imgpoints, mtx, dist, rvecs, tvecs)
 print(f"std. error: {error}")
 
 new_mtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, video.size, 1, video.size)
-error = cal.computeReProjError(objpoints, imgpoints, new_mtx, dist, rvecs, tvecs)
-print(f"new_mtx. error: {error}")
+new_error = cal.computeReProjError(objpoints, imgpoints, new_mtx, dist, rvecs, tvecs)
+print(f"new_mtx. error: {new_error}")
 
 json_camera_matrix = {
     'ret': ret,
     'mtx': mtx.tolist(),
     "new_mtx": new_mtx.tolist(),
-    'dist': dist.tolist()
+    'dist': dist.tolist(),
+    'roi': roi,
+    'error': error,
+    'new_error': new_error,
 }
 
 util.saveToJSON(json_camera_matrix, camera_number)
@@ -89,14 +92,17 @@ error = cal.computeReProjError(objpoints, imgpoints, mtx, dist, rvecs, tvecs)
 print(f"std. error: {error}")
 
 new_mtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, video.size, 1, video.size)
-error = cal.computeReProjError(objpoints, imgpoints, new_mtx, dist, rvecs, tvecs)
-print(f"new_mtx. error: {error}")
+new_error = cal.computeReProjError(objpoints, imgpoints, new_mtx, dist, rvecs, tvecs)
+print(f"new_mtx. error: {new_error}")
 
 json_camera_matrix = {
     'ret': ret,
     'mtx': mtx.tolist(),
-    "new_mtx": new_mtx.tolist(),
-    'dist': dist.tolist()
+    'new_mtx': new_mtx.tolist(),
+    'dist': dist.tolist(),
+    'roi': roi,
+    'error': error,
+    'new_error': new_error,
 }
 
 util.saveToJSONstr(json_camera_matrix, f"{camera_number}corners_notc")
