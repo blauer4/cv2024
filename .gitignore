@@ -19,6 +19,7 @@ undistorted/
 *.json
 !json/*/*.json
 !measures.json
+*.png
 
 # Distribution / packaging
 .Python
