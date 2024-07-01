@@ -12,7 +12,7 @@ all_chessboard_sizes = [(5, 7), (5, 7), (5, 7), (5, 7), (6, 9), (6, 9), (5, 7), 
 camera_number = "4F"
 VIDEO_NAME = 'out' + camera_number
 # Set the frame skip interval 
-frame_skip = 5
+frame_skip = 10
 
 chessboard_size = all_chessboard_sizes[int(re.search(r"\d*", camera_number)[0]) - 1]
 
@@ -46,7 +46,7 @@ timestamp = util.getMilliSeconds(now)
 
 # compute the corners research
 imgpoints, objpoints = video.fastImagesSearch(funct=video.extractCorners, output_dir=output_dir, skip_step=frame_skip,
-                                              batch_size=4)
+                                              batch_size=3)
 print(f'number of corners detected: {len(imgpoints)}')
 # print(f'first imgpoints: {imgpoints[0]}')
 now = dt.datetime.now()
@@ -59,32 +59,6 @@ if imgpoints is []:
 
 objpoints = np.array(objpoints, dtype='float32') * SQUARE_SIZE
 # imgpoints is an array of an array of the detected points on the image
-camera_tc = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 500, 0.001)
-#print(f'tc: {camera_tc}')
-ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, video.size, None, None, criteria=camera_tc)
-# print(f"ret:{ret}\nmtx:{mtx}\ndist:{dist}\nrvecs:{rvecs}\ntvecs:{tvecs}")
-# print(video.size)
-print(f"ret:{ret}")
-error = cal.computeReProjError(objpoints, imgpoints, mtx, dist, rvecs, tvecs)
-print(f"std. error: {error}")
-
-new_mtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, video.size, 1, video.size)
-new_error = cal.computeReProjError(objpoints, imgpoints, new_mtx, dist, rvecs, tvecs)
-print(f"new_mtx. error: {new_error}")
-
-json_camera_matrix = {
-    'ret': ret,
-    'mtx': mtx.tolist(),
-    "new_mtx": new_mtx.tolist(),
-    'dist': dist.tolist(),
-    'roi': roi,
-    'error': error,
-    'new_error': new_error,
-}
-
-util.saveToJSON(json_camera_matrix, camera_number)
-
-print("No tc computation")
 ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, video.size, None, None)
 
 print(f"ret:{ret}")
