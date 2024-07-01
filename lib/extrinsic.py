@@ -34,8 +34,6 @@ def import_coordinates():
                 und_point = cv2.undistortPoints(np.array(image_points[camera][point], dtype=np.float32), mtx,
                                                 distortion_coefficients, P=new_mtx)
                 und_point = np.squeeze(und_point)
-                if camera == 'out2':
-                    print(f"Point {point} is {und_point[0] - x,und_point[1] - y}\t ROI: {x, y } width x height{w, h}")
                 if (und_point[0] - x) > w or (und_point[1] - y) > h:
                     print(f"Point {point} is outside the ROI in camera {camera}")
                 else:
@@ -65,13 +63,12 @@ def plot_camera(extrinsic_matrices, all_camera_coordinates, size):
 
     # The camera positions are in order of the camera numbers
     for extrinsic_matrix in extrinsic_matrices:
-        print(extrinsic_matrix)
         cam = extrinsic_matrix[:3, 3]
         camera_position.append(cam)
         direction = extrinsic_matrix[:3, :3] @ np.array([0, 0, direction_vector_size]) + cam
         camera_direction.append(direction)
         ax.plot([cam[0], direction[0]], [cam[1], direction[1]], [cam[2], direction[2]], c="g")
-    print(f'Calculated: {camera_position}\t{all_camera_coordinates}')
+    # print(f'Calculated: {camera_position}\t{all_camera_coordinates}')
     # Plot camera location obtained from extrinsic matrix
     ax.scatter(
         [c[0] for c in camera_position],
@@ -133,7 +130,7 @@ def main(arg):
                               'camera_3': [22.0, 10.0, 6.6], 'camera_4': [-14.5, 17.7, 6.2],
                               'camera_5': [22.0, -10.2, 5.8], 'camera_6': [0.0, -10.0, 6.3],
                               'camera_7': [-25.0, 0.0, 6.4], 'camera_8': [-22.0, -10.0, 6.3],
-                              'camera_12': [-22.0, 10.0, 6.9], 'camera_13': [22.0, 0.0, 7.0]}
+                              'camera_12': [-22.4, 10.0, 6.9], 'camera_13': [22.0, 0.0, 7.0]}
 
     for x in all_camera_coordinates:
         all_camera_coordinates[x] = np.array(all_camera_coordinates[x], dtype=np.float32)
@@ -143,12 +140,12 @@ def main(arg):
     for camera in image_points:
 
         camera_parameters_path = os.path.join(f"json/{camera}F/{camera.replace('out', '')}Fcorners_notc.json")
-        camera_parameters = json.load(open(camera_parameters_path, "rb"))
 
         if not os.path.exists(camera_parameters_path) or image_points[camera].size == 0:
             print(f"JSON file does not exist for {camera} or image_points")
             continue
 
+        camera_parameters = json.load(open(camera_parameters_path, "rb"))
         # Using the new camera matrix because it is more accurate
         camera_matrix = np.array(camera_parameters["mtx"], dtype=np.float32)
         distortion_coefficients = np.array(camera_parameters['dist'], dtype=np.float32)
@@ -178,17 +175,17 @@ def main(arg):
         extrinsic_matrix = np.hstack((inverse_rotation_matrix, inverse_translation_vector))
         extrinsic_matrix = np.vstack((extrinsic_matrix, [0, 0, 0, 1]))
 
-        print(f"Camera {camera} extrinsic matrix:")
         extrinsic_matrices.append(extrinsic_matrix)
 
         with open(f"json/{camera}F/{camera}_extrinsic_matrix.json", "w") as file:
             json.dump({
                 'ext_mtx': extrinsic_matrix.tolist(),
-                'rot_vct': rotation_vector.tolist(),
-                'trans_vct': translation_vector.tolist(),
+                'rvec': rotation_vector.tolist(),
+                'tvec': translation_vector.tolist(),
             }, file)
 
-        pretty_print_matrix(extrinsic_matrix)
+        # print(f"Camera {camera} extrinsic matrix:")
+        # pretty_print_matrix(extrinsic_matrix)
 
     size = args.size if args.size else 10
     plot_camera(extrinsic_matrices, all_camera_coordinates, size)
