@@ -65,8 +65,21 @@ Creo un "camera world" comune: da cui estraggo le posizioni delle telecamere
         x,y in metri
         u,v in coordinate pixel 
 
+        JSON format, parametri di una telecamera:
+            {
+                "ret": reprojection error calcolato per quella telecamera (deriva dalla CalibrateCamera)
+                "mtx": matrice dei parametri intrinseci calcolata con CalibrateCamera 
+                "new_mtx": matrice dei parametri intrinseci calcolata a partire da "mtx" e ottimizzata 
+                "dist": coefficienti di distorsione calcolati tramite la CalibrateCamera
+                "roi": "region of interest" ottenuta assieme alla "new_mtx" che indica la ...
+            }
+
         B1: punto di origine [0.0,0.0,0.0], poichè visibile da tutte le telecamere
         ASSUMO, distanze B2-B3 (e tutti i casi simili) di 0,95, poichè 0.9 è la distanza tra le due linee interne, distanza reale tra i due 
         centri delle linee(presumibilmente il punto desiderato) è 0.9 + 0.025 + 0.025 = 0.95
 
+        Prendo il centro dei campi come origine
 
+        assumo di 28mm le dimensioni reali del quadrato della scacchiera
+
+        Aggiungo un parametro nella ricerca dei frame da tenere che considera solo immagini con la scacchiera completamente visibile, check della distanza dal bordo 
