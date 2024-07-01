@@ -40,15 +40,15 @@ class Calibration:
         found_corners, corners = cv2.findChessboardCorners(gray, (self.chess_width, self.chess_height), None,
                                                            flags=find_flags)
         # print("Frame ", frame_count, ":", found_corners)
-        if isNearBorder(corners, self.size[0], self.size[1], self.chess_width, self.chess_height):
-            print("skipped frame because too near the image border")
-            return False, None
         # If found, add object points, image points, and save frames for each quadrant
         if found_corners:
+            if isNearBorder(corners, self.size[0], self.size[1], self.chess_width, self.chess_height):
+                print("skipped frame because too near the image border")
+                return False, None
             # centroid = (sum(corners[:, 0, 0]) / len(corners), sum(corners[:, 0, 1]) / len(corners))
             new_center = corners.mean(axis=0)
-            print(corners.mean(axis=0))
-            
+            # print(corners.mean(axis=0))
+
             for center in chessboard_centers:
                 if center.size == 0: continue
                 # print(f"Center: {center[0]}, {center[1]}")
@@ -220,30 +220,31 @@ def computeMultipleRefinePnP(objpoints, imgpoints, mtx, dist, rvecs, tvecs):
     final_tvecs = []
     final_rvecs = []
     for i in range(np.shape(objpoints)[0]):
-        print(rvecs[i])
+        # print(rvecs[i])
         rvec, tvec = cv2.solvePnPRefineLM(objpoints[i], imgpoints[i], mtx, dist, rvecs[i], tvecs[i])
         final_rvecs.append(rvec)
         final_tvecs.append(tvec)
     return final_rvecs, final_tvecs
 
+
 def isNearBorder(corners, width, height, chess_width, chess_height):
-        x = np.array([])
-        y = np.array([])
-        for corner in corners:
-            x = np.append(x,corner[0,0])
-            y = np.append(y,corner[0,1])
-        xmx = x.max()
-        ymx = y.max() 
-        xd = xmx - x.min()
-        yd = ymx - y.min()
-        print(f"x:{x}")
-        print(f"y: {y}")
-        threshold = ((xd / chess_width) + (yd / chess_height)) / 2 
-        print(f"threshold: {threshold}")
-        check1 =  x < threshold
-        check2 = y < threshold
-        check3 = (width - x) < threshold
-        check4 = (height - y) < threshold
-        if (check1.any()) or (check2.any())  or (check3.any()) or (check4.any()):
-            return True
-        return False
+    x = np.array([])
+    y = np.array([])
+    for corner in corners:
+        x = np.append(x, corner[0, 0])
+        y = np.append(y, corner[0, 1])
+    xmx = x.max()
+    ymx = y.max()
+    xd = xmx - x.min()
+    yd = ymx - y.min()
+    # print(f"x:{x}")
+    # print(f"y: {y}")
+    threshold = (xd / chess_width) + (yd / chess_height)
+    # print(f"threshold: {threshold}")
+    check1 = x < threshold
+    check2 = y < threshold
+    check3 = (width - x) < threshold
+    check4 = (height - y) < threshold
+    if (check1.any()) or (check2.any()) or (check3.any()) or (check4.any()):
+        return True
+    return False
