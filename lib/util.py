@@ -17,6 +17,77 @@ class Flag:
 
     def change(self):
         self.f = not self.f
+#insert the camera number of what you want to compute the homography
+#uses measures files in the same directory of the calling file
+def computeFieldHomography(camera:str, save= True):
+
+    measures = LoadJSON('measures.json')
+    camera1_img = []
+    camera1_world = []
+
+    img_points = measures["image_points"][f"out{camera}"]
+    world_points = measures["world_points"]
+
+    for key in img_points:
+        temp = world_points[key]
+        camera1_world.append(temp)
+        camera1_img.append(img_points[key])
+    camera1_world = np.array(camera1_world)
+    camera1_world = camera1_world[:,:2]
+    camera1_img = np.array(camera1_img)
+
+    Hom, mask = cv2.findHomography(camera1_img, camera1_world)
+    print(Hom)
+    if save:
+        saveToJSONstr({"H": Hom.tolist()},f'homography{camera}')
+    return Hom
+#ugly version but works
+def seeHomographyMapping(img, window_name, homography):
+    def mouseCallback(event, x, y, flags, params):
+        if event == cv2.EVENT_LBUTTONDOWN:
+            # print(f"event:{event}\nx:{x}\ny:{y}\nevent:{flags}")
+            img_point = np.array([x,y,1])
+            real_point = homography @ img_point.T
+            real_point = real_point/ real_point[2]
+            print(real_point)
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            cv2.putText(img, f'[{x},{y}], [{real_point}]', (x, y), font, 1, (0, 0, 0), 3)
+            cv2.circle(img, (x, y), 5, (0, 255, 0), -1)
+            cv2.imshow(window_name, img)
+
+
+    def callbackButton(state, userdata):
+        w_name, flag = userdata
+        if flag.f:
+            cv2.setMouseCallback(w_name, mouseCallback)
+        else:
+            cv2.setMouseCallback(w_name, lambda *args: None)
+        flag.change()
+
+
+    def showImage(img, window_name: str):
+        """
+        Takes an image and show it in a fixed size window, press a button to close it in the end
+            - img: An image to be shown
+            - window_name: the name of the window where displaying the image
+        """
+        # show the original image
+        w_name = window_name
+        cv2.namedWindow(w_name, cv2.WINDOW_NORMAL)
+
+        flag = Flag(True)
+
+        cv2.createButton('select_pixel', callbackButton, (w_name, flag))
+
+        # Using resizeWindow() 
+        cv2.resizeWindow(w_name, 1920, 1080)
+        cv2.imshow(w_name, img)
+        cv2.waitKey(0)
+        # while cv2.waitKey(33) != ord('a'):
+        #     cv2.imshow(w_name, img)
+        cv2.destroyWindow(window_name)
+
+    showImage(img,window_name)
 
 ###
 # METHODS FOR MANIPULATING IMAGES
