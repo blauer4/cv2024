@@ -6,7 +6,20 @@ import os
 
 
 ###
-# METHODS FOR GENERAL UTILITY
+# METHODS AND CLASSES FOR GENERAL UTILITY
+###
+
+class Flag:
+    f = True
+
+    def __init__(self, value: bool):
+        self.f = value
+
+    def change(self):
+        self.f = not self.f
+
+###
+# METHODS FOR MANIPULATING IMAGES
 ###
 
 def showImage(img, window_name: str):
