@@ -113,7 +113,7 @@ def seeCamerasMapping(img, window_name, homographies, undistort=None):
 
 # insert the camera number of what you want to compute the homography
 # uses measures files in the same directory of the calling file
-def computeUndistortedHomography(camera: str, flags, save=True):
+def computeUndistortWorldHomography(camera: str, flags, save=True):
     """
     Compute the homography between the world points and the image points of a camera
     :param camera: The number of the camera to which compute the homography map
@@ -224,11 +224,9 @@ def computeCamerasUndistortedHomography(src_camera: str, dst_camera: str, mtx: t
     return hom
 
 
-# ugly version but works
-def seeHomographyMapping(img, window_name, homography):
+def seeWorldHomographyMapping(img, window_name, homography):
     def mouseCallback(event, x, y, flags, params):
         if event == cv2.EVENT_LBUTTONDOWN:
-            # print(f"event:{event}\nx:{x}\ny:{y}\nevent:{flags}")
             img_point = np.array([x, y, 1])
             real_point = homography @ img_point.T
             real_point = real_point / real_point[2]
@@ -246,30 +244,86 @@ def seeHomographyMapping(img, window_name, homography):
             cv2.setMouseCallback(w_name, lambda *args: None)
         flag.change()
 
-    # to be changed
-    def showImage(img, window_name: str):
-        """
-        Takes an image and show it in a fixed size window, press a button to close it in the end
-            - img: An image to be shown
-            - window_name: the name of the window where displaying the image
-        """
-        # show the original image
-        w_name = window_name
-        cv2.namedWindow(w_name, cv2.WINDOW_NORMAL)
+    cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
 
-        flag = Flag(True)
+    flag = Flag(True)
 
-        cv2.createButton('select_pixel', callbackButton, (w_name, flag))
+    cv2.createButton('select_pixel', callbackButton, (window_name, flag))
 
-        # Using resizeWindow() 
-        cv2.resizeWindow(w_name, 1920, 1080)
-        cv2.imshow(w_name, img)
-        cv2.waitKey(0)
-        # while cv2.waitKey(33) != ord('a'):
-        #     cv2.imshow(w_name, img)
-        cv2.destroyWindow(window_name)
+    cv2.resizeWindow(window_name, 1920, 1080)
+    cv2.imshow(window_name, img)
+    cv2.waitKey(0)
+    cv2.destroyWindow(window_name)
 
-    showImage(img, window_name)
+
+def computeCameraProjectionError(homography, points: tuple, src_parameters = None, dst_parameters = None):
+    
+    src_points, target_points = points
+    
+    #flag for handling the undistorted case
+    undflag = src_parameters is None or dst_parameters is None
+    
+    mtx_src = None
+    dist_src = None
+    new_mtx_src = None
+    mtx_dst = None
+    dist_dst = None
+    new_mtx_dst = None
+
+    if not undflag:
+        mtx_src, dist_src , new_mtx_src = src_parameters
+        mtx_dst, dist_dst , new_mtx_dst = dst_parameters
+    h = homography
+    points_number = src_points.shape[0]
+    
+    
+    und_src_points = []
+
+    if points_number != target_points.shape[0]:
+        print("points numbers in source and target have to be the same")
+        return -1
+    if not undflag:
+        und_src_points = cv2.undistortPoints(src_points, mtx_src, dist_src, P= new_mtx_src)
+    else:
+        und_src_points = src_points
+
+    und_src_points = cv2.convertPointsToHomogeneous(und_src_points)
+    und_src_points = np.squeeze(und_src_points,axis= 1)
+    
+    #compute the homography for each point
+    dst_points = []
+    for und_point in und_src_points:
+        dst_point = h @ und_point.T
+        #transpose it
+        dst_point = dst_point.T
+        #normalize it 
+        dst_point = dst_point/ dst_point[2] 
+        #print(f'dst_point:{dst_point}')
+        dst_points.append(dst_point[:2])
+
+    #print(f'dst_points:{dst_points}')
+    dst_points = np.array(dst_points, dtype= np.float32)
+    #print(f'dst:{dst_points}')
+    
+    #Project back the point
+    if not undflag:
+        dist_zero = np.zeros((1,5), np.float32)
+        und_dst_points = cv2.undistortPoints(dst_points, new_mtx_dst, dist_zero)
+        #print(f'dst after undistortion: {und_dst_points}')
+        
+        dst_points_hmgn = cv2.convertPointsToHomogeneous(und_dst_points)
+        #print(f'dst sfter homogeneous: {dst_point}')
+        
+        tvec = np.zeros((1,3), dtype= np.float32)
+        rvec = tvec
+        output = cv2.projectPoints(dst_points_hmgn, rvec , tvec, mtx_dst, dist_dst)
+        output = np.squeeze(output[0])
+        #print(f'target:{target_points}\noutput:{output}')
+    else:
+        output = dst_points
+    error = cv2.norm(output,target_points,normType=cv2.NORM_L1) / int(points_number)
+    print(f'reprojection error: {error}')
+    return error
 
 
 ###
