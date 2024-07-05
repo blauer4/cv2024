@@ -252,11 +252,10 @@ def seeWorldHomographyMapping(img, window_name, homography):
     cv2.destroyWindow(window_name)
 
 
-def computeCameraProjectionError(homography, points: tuple, src_parameters = None, dst_parameters = None):
-
+def computeCameraProjectionError(homography, points: tuple, src_parameters=None, dst_parameters=None):
     src_points, target_points = points
 
-    #flag for handling the undistorted case
+    # flag for handling the undistorted case
     undflag = src_parameters is None or dst_parameters is None
 
     mtx_src = None
@@ -267,11 +266,10 @@ def computeCameraProjectionError(homography, points: tuple, src_parameters = Non
     new_mtx_dst = None
 
     if not undflag:
-        mtx_src, dist_src , new_mtx_src = src_parameters
-        mtx_dst, dist_dst , new_mtx_dst = dst_parameters
+        mtx_src, dist_src, new_mtx_src = src_parameters
+        mtx_dst, dist_dst, new_mtx_dst = dst_parameters
     h = homography
     points_number = src_points.shape[0]
-
 
     und_src_points = []
 
@@ -279,45 +277,45 @@ def computeCameraProjectionError(homography, points: tuple, src_parameters = Non
         print("points numbers in source and target have to be the same")
         return -1
     if not undflag:
-        und_src_points = cv2.undistortPoints(src_points, mtx_src, dist_src, P= new_mtx_src)
+        und_src_points = cv2.undistortPoints(src_points, mtx_src, dist_src, P=new_mtx_src)
     else:
         und_src_points = src_points
 
     und_src_points = cv2.convertPointsToHomogeneous(und_src_points)
-    und_src_points = np.squeeze(und_src_points,axis= 1)
+    und_src_points = np.squeeze(und_src_points, axis=1)
 
-    #compute the homography for each point
+    # compute the homography for each point
     dst_points = []
     for und_point in und_src_points:
         dst_point = h @ und_point.T
-        #transpose it
+        # transpose it
         dst_point = dst_point.T
-        #normalize it
-        dst_point = dst_point/ dst_point[2]
-        #print(f'dst_point:{dst_point}')
+        # normalize it
+        dst_point = dst_point / dst_point[2]
+        # print(f'dst_point:{dst_point}')
         dst_points.append(dst_point[:2])
 
-    #print(f'dst_points:{dst_points}')
-    dst_points = np.array(dst_points, dtype= np.float32)
-    #print(f'dst:{dst_points}')
+    # print(f'dst_points:{dst_points}')
+    dst_points = np.array(dst_points, dtype=np.float32)
+    # print(f'dst:{dst_points}')
 
-    #Project back the point
+    # Project back the point
     if not undflag:
-        dist_zero = np.zeros((1,5), np.float32)
+        dist_zero = np.zeros((1, 5), np.float32)
         und_dst_points = cv2.undistortPoints(dst_points, new_mtx_dst, dist_zero)
-        #print(f'dst after undistortion: {und_dst_points}')
+        # print(f'dst after undistortion: {und_dst_points}')
 
         dst_points_hmgn = cv2.convertPointsToHomogeneous(und_dst_points)
-        #print(f'dst sfter homogeneous: {dst_point}')
+        # print(f'dst sfter homogeneous: {dst_point}')
 
-        tvec = np.zeros((1,3), dtype= np.float32)
+        tvec = np.zeros((1, 3), dtype=np.float32)
         rvec = tvec
-        output = cv2.projectPoints(dst_points_hmgn, rvec , tvec, mtx_dst, dist_dst)
+        output = cv2.projectPoints(dst_points_hmgn, rvec, tvec, mtx_dst, dist_dst)
         output = np.squeeze(output[0])
-        #print(f'target:{target_points}\noutput:{output}')
+        # print(f'target:{target_points}\noutput:{output}')
     else:
         output = dst_points
-    error = cv2.norm(output,target_points,normType=cv2.NORM_L1) / int(points_number)
+    error = cv2.norm(output, target_points, normType=cv2.NORM_L1) / int(points_number)
     print(f'reprojection error: {error}')
     return error
 
@@ -439,3 +437,29 @@ def create2DArray(start_val, end_val):
         for b in val:
             chess_2d_array.append([a, b])
     return chess_2d_array
+
+
+def calculate_distance(p1, p2):
+    return cv2.norm(src1=np.array(p1), src2=np.array(p2), normType=cv2.NORM_L1)
+
+
+def near_far_cameras(source):
+    """
+    Method that returns the near and far cameras from a given camera
+    Coordinates are not the real ones, as we just need a separation between near and farthest cameras
+    :param source: The camera from which we are computing the distance
+    :return: An array that contains cameras separated in a near and far list
+    """
+    cams = {1: [2, 3], 2: [1, 3], 3: [2, 2], 4: [0, 3], 5: [2, 0], 6: [1, 0], 7: [0, 1], 8: [0, 0], 12: [0, 2],
+            13: [2, 1]}
+    near = []
+    far = []
+    for other in cams.keys():
+        if other == source:
+            continue
+        if calculate_distance(cams[source], cams[other]) < 3:
+            near.append(other)
+        else:
+            far.append(other)
+    near.sort(key=lambda p: calculate_distance(cams[source], cams[p]))
+    return near, far
