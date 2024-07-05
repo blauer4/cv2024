@@ -3,6 +3,8 @@ import json
 import datetime
 import cv2
 import os
+import Calibration as cal
+import json
 
 
 ###
@@ -18,23 +20,23 @@ class Flag:
     def change(self):
         self.f = not self.f
 
-def seeCamerasMapping(img, window_name, homographies, undistort = None):
+
+def seeCamerasMapping(img, window_name, homographies, undistort=None):
     Hsrc, Hdst = homographies
     window_name_src, window_name_dst = window_name
     img_src, img_dst = img
-    
-    #undistort parameters
-    
+
+    # undistort parameters
+
     mtx_src = None
     new_mtx_src = None
     dist_src = None
     mtx_dst = None
     dist_dst = None
     new_mtx_dst = None
-    #flag for case handling
+    # flag for case handling
     homoflag = True
     undflag = True
-
 
     if Hdst is None:
         homoflag = False
@@ -47,44 +49,40 @@ def seeCamerasMapping(img, window_name, homographies, undistort = None):
     def mouseCallback(event, x, y, flags, params):
         if event == cv2.EVENT_LBUTTONDOWN:
             # print(f"event:{event}\nx:{x}\ny:{y}\nevent:{flags}")
-            src_point = np.array([x,y], np.float32)
+            src_point = np.array([x, y], np.float32)
             dst_point = None
             print(f'src: {src_point}')
             if undflag:
                 src_point = src_point[:2]
-                src_point = cv2.undistortPoints(src_point, mtx_src, dist_src, P= new_mtx_src)
+                src_point = cv2.undistortPoints(src_point, mtx_src, dist_src, P=new_mtx_src)
                 src_point = np.append(src_point, [1])
 
             if homoflag:
                 dst_point = np.linalg.inv(Hdst) @ Hsrc @ src_point.T
             else:
                 dst_point = Hsrc @ src_point.T
-            #transpose it
+            # Transpose it
             dst_point = dst_point.T
-            #normalize it 
-            dst_point = np.array((dst_point/ dst_point[2]), dtype= np.float32) 
-            #print(f"{src_point} = {dst_point}")
-            print(f'dst:{dst_point}')
-            #Project back the point
-            und_dst = cv2.undistortPoints(dst_point[:2],new_mtx_dst, np.zeros((1,5), np.float32))
-            print(f'dst after undistortion: {und_dst}')
+            # Normalize it
+            dst_point = np.array((dst_point / dst_point[2]), dtype=np.float32)
+            # Project back the point
+            und_dst = cv2.undistortPoints(dst_point[:2], new_mtx_dst, np.zeros((1, 5), dtype=np.float32))
             dst_point = cv2.convertPointsToHomogeneous(und_dst)
-            print(f'dst sfter homogeneous: {dst_point}')
-            output = cv2.projectPoints(dst_point, np.zeros((1,3), dtype= np.float32), np.zeros((1,3), dtype= np.float32), mtx_dst, dist_dst)
-            print(f'after project: {output}')
+            output = cv2.projectPoints(dst_point, np.zeros((1, 3), dtype=np.float32),
+                                       np.zeros((1, 3), dtype=np.float32), mtx_dst, dist_dst, und_dst)
+
             output = output[0].flatten()
             x2 = int(output[0])
             y2 = int(output[1])
             font = cv2.FONT_HERSHEY_SIMPLEX
             cv2.putText(img_src, f'[{x},{y}]', (x, y), font, 1, (0, 0, 0), 3)
-            cv2.putText(img_dst, f'[{x2},{y2}]', (x2,y2), font, 1, (0, 0, 0), 3)
-            
+            cv2.putText(img_dst, f'[{x2},{y2}]', (x2, y2), font, 1, (0, 0, 0), 3)
+
             cv2.circle(img_src, (x, y), 5, (0, 255, 0), -1)
-            cv2.circle(img_dst, (x2,y2), 5, (0, 255, 0), -1)
-            
+            cv2.circle(img_dst, (x2, y2), 5, (0, 255, 0), -1)
+
             cv2.imshow(window_name_src, img_src)
             cv2.imshow(window_name_dst, img_dst)
-
 
     def callbackButton(state, userdata):
         w_name, flag = userdata
@@ -94,13 +92,11 @@ def seeCamerasMapping(img, window_name, homographies, undistort = None):
             cv2.setMouseCallback(w_name, lambda *args: None)
         flag.change()
 
-
-    
     # show the original image
     cv2.namedWindow(window_name_src, cv2.WINDOW_NORMAL)
     cv2.namedWindow(window_name_dst, cv2.WINDOW_NORMAL)
 
-    flag = util.Flag(True)
+    flag = Flag(True)
 
     cv2.createButton('select_pixel', callbackButton, (window_name_src, flag))
 
@@ -113,13 +109,21 @@ def seeCamerasMapping(img, window_name, homographies, undistort = None):
     cv2.waitKey(0)
     cv2.destroyWindow(window_name_src)
     cv2.destroyWindow(window_name_dst)
-#insert the camera number of what you want to compute the homography
-#uses measures files in the same directory of the calling file
-def computeUndistortedHomography(camera:str, flags,save= True):
 
+
+# insert the camera number of what you want to compute the homography
+# uses measures files in the same directory of the calling file
+def computeUndistortedHomography(camera: str, flags, save=True):
+    """
+    Compute the homography between the world points and the image points of a camera
+    :param camera: The number of the camera to which compute the homography map
+    :param flags: Flags for the opencv homography function
+    :param save: If I want to save the homography map to file
+    :return:
+    """
     measures = LoadJSON('measures.json')
     camera1_params = LoadJSON(f'json/out{camera}F/{camera}Fcorners_notc.json')
-    #preparing for undistort the points
+    # preparing for undistort the points
     mtx1 = np.array(camera1_params['mtx'])
     new_mtx1 = np.array(camera1_params['new_mtx'])
     dist1 = np.array(camera1_params['dist'])
@@ -135,18 +139,26 @@ def computeUndistortedHomography(camera:str, flags,save= True):
         camera1_world.append(temp)
         camera1_img.append(img_points[key])
     camera1_world = np.array(camera1_world)
-    camera1_world = camera1_world[:,:2]
+    camera1_world = camera1_world[:, :2]
     camera1_img = np.array(camera1_img, np.float32)
 
     und_points = cv2.undistortPoints(camera1_img, mtx1, dist1, P=new_mtx1)
-    Hom, mask = cv2.findHomography(und_points, camera1_world, method= flags)
-    print(Hom)
+    hom, mask = cv2.findHomography(und_points, camera1_world, method=flags)
     if save:
-        saveToJSONstr({"H": Hom.tolist()},f'homography{camera}')
-    return Hom
+        saveToJSONstr({"H": hom.tolist()}, f'homography_{camera}')
+    return hom
 
-def computeCamerasHomography(src_camera, dst_camera,flags = 0,save= False):
 
+# between the two distorted
+def computeCamerasHomography(src_camera, dst_camera, flags=0, save=False):
+    """
+    Compute the homography between two cameras with distorted coordinates
+    :param src_camera: The original camera from which we map the point
+    :param dst_camera: The destination cam of the homography map
+    :param flags: Flags for the opencv homography function
+    :param save: If I want to save the homography map to file
+    :return:
+    """
     measures = LoadJSON('measures.json')
 
     camera_src = []
@@ -161,29 +173,70 @@ def computeCamerasHomography(src_camera, dst_camera,flags = 0,save= False):
             camera_dst.append(temp)
             camera_src.append(src_points[key])
     camera_dst = np.array(camera_dst, np.float32)
-    camera_dst = camera_dst[:,:2]
+    camera_dst = camera_dst[:, :2]
     camera_src = np.array(camera_src, np.float32)
 
-    Hom, mask = cv2.findHomography(camera_src, camera_dst, method= flags)
-    print(Hom)
+    hom, mask = cv2.findHomography(camera_src, camera_dst, method=flags)
     if save:
-        saveToJSONstr({"H": Hom.tolist()},f'homography{src_camera}{dst_camera}')
-    return Hom
+        saveToJSONstr({"H": hom.tolist()}, f'homography_{src_camera}{dst_camera}')
+    return hom
 
-#ugly version but works
+
+# between the two rectified homography(better)
+def computeCamerasUndistortedHomography(src_camera: str, dst_camera: str, mtx: tuple, dist: tuple, new_mtx: tuple,
+                                        flags=0, save=False):
+    """
+    Compute the homography between two cameras with undistorted coordinates
+    :param src_camera: The source camera from which we select a point
+    :param dst_camera: The destination camera to which we map the point
+    :param mtx: Tuple containing the camera matrix related to the src and dst cameras
+    :param dist: Tuple containing the distortion vectors related to the src and dst cameras
+    :param new_mtx: Tuple containing the undistorted camera matrix related to the src and dst cameras
+    :param flags: Flags for the opencv homography function
+    :param save: If I want to save the homography map to file
+    :return:
+    """
+    mtx_src, mtx_dst = mtx
+    dist_src, dist_dst = dist
+    new_mtx_src, new_mtx_dst = new_mtx
+    measures = LoadJSON('measures.json')
+
+    camera_src = []
+    camera_dst = []
+
+    src_points = measures["image_points"][f"out{src_camera}"]
+    dst_points = measures["image_points"][f"out{dst_camera}"]
+
+    for key in src_points:
+        temp = dst_points.get(key)
+        if temp:
+            camera_dst.append(temp)
+            camera_src.append(src_points[key])
+
+    camera_src = np.array(camera_src, np.float32)
+    camera_src = cv2.undistortPoints(camera_src, mtx_src, dist_src, P=new_mtx_src)
+    camera_dst = np.array(camera_dst, np.float32)
+    camera_dst = cv2.undistortPoints(camera_dst, mtx_dst, dist_dst, P=new_mtx_dst)
+
+    hom, mask = cv2.findHomography(camera_src, camera_dst, method=flags)
+    if save:
+        saveToJSONstr({"H": hom.tolist()}, f'homography_{src_camera}{dst_camera}')
+    return hom
+
+
+# ugly version but works
 def seeHomographyMapping(img, window_name, homography):
     def mouseCallback(event, x, y, flags, params):
         if event == cv2.EVENT_LBUTTONDOWN:
             # print(f"event:{event}\nx:{x}\ny:{y}\nevent:{flags}")
-            img_point = np.array([x,y,1])
+            img_point = np.array([x, y, 1])
             real_point = homography @ img_point.T
-            real_point = real_point/ real_point[2]
+            real_point = real_point / real_point[2]
             print(real_point)
             font = cv2.FONT_HERSHEY_SIMPLEX
             cv2.putText(img, f'[{x},{y}], [{real_point}]', (x, y), font, 1, (0, 0, 0), 3)
             cv2.circle(img, (x, y), 5, (0, 255, 0), -1)
             cv2.imshow(window_name, img)
-
 
     def callbackButton(state, userdata):
         w_name, flag = userdata
@@ -193,7 +246,7 @@ def seeHomographyMapping(img, window_name, homography):
             cv2.setMouseCallback(w_name, lambda *args: None)
         flag.change()
 
-    #to be changed
+    # to be changed
     def showImage(img, window_name: str):
         """
         Takes an image and show it in a fixed size window, press a button to close it in the end
@@ -216,7 +269,8 @@ def seeHomographyMapping(img, window_name, homography):
         #     cv2.imshow(w_name, img)
         cv2.destroyWindow(window_name)
 
-    showImage(img,window_name)
+    showImage(img, window_name)
+
 
 ###
 # METHODS FOR MANIPULATING IMAGES
@@ -256,13 +310,13 @@ def saveToJSON(dict: dict, camera_number: int):
     with open(f"{camera_number}corners.json", "a+") as outfile:
         json.dump(dict, outfile)
         return True
-    return False
+
 
 def saveToJSONstr(dict: dict, name: str):
     with open(f"{name}.json", "a+") as outfile:
         json.dump(dict, outfile)
         return True
-    return False
+
 
 def LoadJSON(filepath) -> dict:
     with open(filepath, "r") as outfile:
