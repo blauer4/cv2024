@@ -3,7 +3,6 @@ import json
 import datetime
 import cv2
 import os
-import Calibration as cal
 import json
 
 
@@ -113,7 +112,7 @@ def seeCamerasMapping(img, window_name, homographies, undistort=None):
 
 # insert the camera number of what you want to compute the homography
 # uses measures files in the same directory of the calling file
-def computeUndistortWorldHomography(camera: str, flags, save=True):
+def computeUndistortWorldHomography(camera: str, flags):
     """
     Compute the homography between the world points and the image points of a camera
     :param camera: The number of the camera to which compute the homography map
@@ -144,13 +143,11 @@ def computeUndistortWorldHomography(camera: str, flags, save=True):
 
     und_points = cv2.undistortPoints(camera1_img, mtx1, dist1, P=new_mtx1)
     hom, mask = cv2.findHomography(und_points, camera1_world, method=flags)
-    if save:
-        saveToJSONstr({"H": hom.tolist()}, f'homography_{camera}')
     return hom
 
 
 # between the two distorted
-def computeCamerasHomography(src_camera, dst_camera, flags=0, save=False):
+def computeCamerasHomography(src_camera, dst_camera, flags=0):
     """
     Compute the homography between two cameras with distorted coordinates
     :param src_camera: The original camera from which we map the point
@@ -177,14 +174,12 @@ def computeCamerasHomography(src_camera, dst_camera, flags=0, save=False):
     camera_src = np.array(camera_src, np.float32)
 
     hom, mask = cv2.findHomography(camera_src, camera_dst, method=flags)
-    if save:
-        saveToJSONstr({"H": hom.tolist()}, f'homography_{src_camera}{dst_camera}')
     return hom
 
 
 # between the two rectified homography(better)
 def computeCamerasUndistortedHomography(src_camera: str, dst_camera: str, mtx: tuple, dist: tuple, new_mtx: tuple,
-                                        flags=0, save=False):
+                                        flags=0):
     """
     Compute the homography between two cameras with undistorted coordinates
     :param src_camera: The source camera from which we select a point
@@ -193,7 +188,6 @@ def computeCamerasUndistortedHomography(src_camera: str, dst_camera: str, mtx: t
     :param dist: Tuple containing the distortion vectors related to the src and dst cameras
     :param new_mtx: Tuple containing the undistorted camera matrix related to the src and dst cameras
     :param flags: Flags for the opencv homography function
-    :param save: If I want to save the homography map to file
     :return:
     """
     mtx_src, mtx_dst = mtx
@@ -214,13 +208,15 @@ def computeCamerasUndistortedHomography(src_camera: str, dst_camera: str, mtx: t
             camera_src.append(src_points[key])
 
     camera_src = np.array(camera_src, np.float32)
-    camera_src = cv2.undistortPoints(camera_src, mtx_src, dist_src, P=new_mtx_src)
     camera_dst = np.array(camera_dst, np.float32)
-    camera_dst = cv2.undistortPoints(camera_dst, mtx_dst, dist_dst, P=new_mtx_dst)
 
-    hom, mask = cv2.findHomography(camera_src, camera_dst, method=flags)
-    if save:
-        saveToJSONstr({"H": hom.tolist()}, f'homography_{src_camera}{dst_camera}')
+    if camera_dst.shape[0] < 4 or camera_src.shape[0] < 4:
+        print("Too few points to compute the homography map between cam")
+        hom = None
+    else:
+        camera_src = cv2.undistortPoints(camera_src, mtx_src, dist_src, P=new_mtx_src)
+        camera_dst = cv2.undistortPoints(camera_dst, mtx_dst, dist_dst, P=new_mtx_dst)
+        hom, _ = cv2.findHomography(camera_src, camera_dst, method=flags)
     return hom
 
 
@@ -257,12 +253,12 @@ def seeWorldHomographyMapping(img, window_name, homography):
 
 
 def computeCameraProjectionError(homography, points: tuple, src_parameters = None, dst_parameters = None):
-    
+
     src_points, target_points = points
-    
+
     #flag for handling the undistorted case
     undflag = src_parameters is None or dst_parameters is None
-    
+
     mtx_src = None
     dist_src = None
     new_mtx_src = None
@@ -275,8 +271,8 @@ def computeCameraProjectionError(homography, points: tuple, src_parameters = Non
         mtx_dst, dist_dst , new_mtx_dst = dst_parameters
     h = homography
     points_number = src_points.shape[0]
-    
-    
+
+
     und_src_points = []
 
     if points_number != target_points.shape[0]:
@@ -289,31 +285,31 @@ def computeCameraProjectionError(homography, points: tuple, src_parameters = Non
 
     und_src_points = cv2.convertPointsToHomogeneous(und_src_points)
     und_src_points = np.squeeze(und_src_points,axis= 1)
-    
+
     #compute the homography for each point
     dst_points = []
     for und_point in und_src_points:
         dst_point = h @ und_point.T
         #transpose it
         dst_point = dst_point.T
-        #normalize it 
-        dst_point = dst_point/ dst_point[2] 
+        #normalize it
+        dst_point = dst_point/ dst_point[2]
         #print(f'dst_point:{dst_point}')
         dst_points.append(dst_point[:2])
 
     #print(f'dst_points:{dst_points}')
     dst_points = np.array(dst_points, dtype= np.float32)
     #print(f'dst:{dst_points}')
-    
+
     #Project back the point
     if not undflag:
         dist_zero = np.zeros((1,5), np.float32)
         und_dst_points = cv2.undistortPoints(dst_points, new_mtx_dst, dist_zero)
         #print(f'dst after undistortion: {und_dst_points}')
-        
+
         dst_points_hmgn = cv2.convertPointsToHomogeneous(und_dst_points)
         #print(f'dst sfter homogeneous: {dst_point}')
-        
+
         tvec = np.zeros((1,3), dtype= np.float32)
         rvec = tvec
         output = cv2.projectPoints(dst_points_hmgn, rvec , tvec, mtx_dst, dist_dst)
