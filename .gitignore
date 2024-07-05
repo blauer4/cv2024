@@ -17,6 +17,7 @@ scacchiere/
 videos/
 undistorted/
 *.json
+image.png
 !json/*/*.json
 !measures.json
 
