@@ -84,7 +84,7 @@ def plot_camera(extrinsic_matrices, all_camera_coordinates, size):
         [coordinates[0] for coordinates in all_camera_coordinates.values()],
         [coordinates[1] for coordinates in all_camera_coordinates.values()],
         [coordinates[2] for coordinates in all_camera_coordinates.values()],
-        c="y",
+        c="c",
         marker="o",
         label="Other Cameras",
     )
