@@ -1,5 +1,5 @@
 import numpy as np
-import json
+import re
 import datetime
 import cv2
 import os
@@ -463,3 +463,15 @@ def near_far_cameras(source):
             far.append(other)
     near.sort(key=lambda p: calculate_distance(cams[source], cams[p]))
     return near, far
+
+
+def load_test_images():
+    """
+    Load the test images for the unit tests
+    :return: A dictionary containing the images
+    """
+    images = {}
+    img_paths = os.listdir('test_images')
+    for i in img_paths:
+        images[f"{re.search(r'\d+', i)[0]}"] = cv2.imread(f"test_images/{i}")
+    return images
