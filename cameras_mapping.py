@@ -130,8 +130,8 @@ def computeCamerasUndistortedHomography(src_camera: str, dst_camera: str, mtx, d
     return Hom
 
 #load the image you want to visualize
-i1 = cv2.imread('camera1.png')
-i2 = cv2.imread('camera3.png')
+i1 = cv2.imread('test_images/camera1.png')
+i2 = cv2.imread('test_images/camera3.png')
 #load the intrinsic parameters
 camera1_params = util.LoadJSON('json/out1F/1Fcorners_notc.json')
 camera2_params = util.LoadJSON('json/out3F/3Fcorners_notc.json')
