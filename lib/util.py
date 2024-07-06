@@ -450,8 +450,8 @@ def near_far_cameras(source):
     :param source: The camera from which we are computing the distance
     :return: An array that contains cameras separated in a near and far list
     """
-    cams = {1: [2, 3], 2: [1, 3], 3: [2, 2], 4: [0, 3], 5: [2, 0], 6: [1, 0], 7: [0, 1], 8: [0, 0], 12: [0, 2],
-            13: [2, 1]}
+    cams = {"1": [2, 3], "2": [1, 3], "3": [2, 2], "4": [0, 3], "5": [2, 0], "6": [1, 0], "7": [0, 1], "8": [0, 0],
+            "12": [0, 2], "13": [2, 1]}
     near = []
     far = []
     for other in cams.keys():
@@ -467,7 +467,7 @@ def near_far_cameras(source):
 
 def load_test_images():
     """
-    Load the test images for the unit tests
+    Load the test images for the tests
     :return: A dictionary containing the images
     """
     images = {}

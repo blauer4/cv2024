@@ -124,7 +124,6 @@ def plot_camera(extrinsic_matrices, all_camera_coordinates, size):
 
 
 def main(arg):
-    camera_number = arg.camera_number
     # Baseline camera coordinates
     all_camera_coordinates = {'camera_1': [14.5, 17.7, 6.2], 'camera_2': [0.0, 17.7, 6.2],
                               'camera_3': [22.0, 10.0, 6.6], 'camera_4': [-14.5, 17.7, 6.2],
@@ -187,14 +186,12 @@ def main(arg):
         # print(f"Camera {camera} extrinsic matrix:")
         # pretty_print_matrix(extrinsic_matrix)
 
-    size = args.size if args.size else 10
+    size = arg.size if arg.size else 10
     plot_camera(extrinsic_matrices, all_camera_coordinates, size)
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Show the extrinsic matrix of a camera")
-
-    parser.add_argument("-c", "--camera_number", type=int, help="The camera number")
 
     parser.add_argument("-s", "--size", type=int, help="The size of the plot")
 
