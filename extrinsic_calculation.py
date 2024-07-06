@@ -3,9 +3,7 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 import os
-import pickle
 import sys
-import yaml
 import json
 
 
@@ -123,6 +121,13 @@ def plot_camera(extrinsic_matrices, all_camera_coordinates, size):
     plt.show()
 
 
+def calculate_error(real_world_camera_pos, extrinsic_matrix):
+    cam = extrinsic_matrix[:3, 3]
+    # Calculate the error
+    error = cv2.norm(real_world_camera_pos, cam, cv2.NORM_L2)
+    return error
+
+
 def main(arg):
     # Baseline camera coordinates
     all_camera_coordinates = {'camera_1': [14.5, 17.7, 6.2], 'camera_2': [0.0, 17.7, 6.2],
@@ -132,7 +137,7 @@ def main(arg):
                               'camera_12': [-22.4, 10.0, 6.9], 'camera_13': [22.0, 0.0, 7.0]}
 
     for x in all_camera_coordinates:
-        all_camera_coordinates[x] = np.array(all_camera_coordinates[x], dtype=np.float32)
+        all_camera_coordinates[x] = np.array(all_camera_coordinates[x], dtype=np.float64)
 
     world_points, image_points = import_coordinates()
     extrinsic_matrices = []
@@ -185,7 +190,7 @@ def main(arg):
 
         # print(f"Camera {camera} extrinsic matrix:")
         # pretty_print_matrix(extrinsic_matrix)
-
+        print(f"Camera {camera} L2Norm: {calculate_error(all_camera_coordinates[f"camera_{camera.replace('out', '')}"], extrinsic_matrix)}")
     size = arg.size if arg.size else 10
     plot_camera(extrinsic_matrices, all_camera_coordinates, size)
 
