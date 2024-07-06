@@ -173,8 +173,13 @@ def computeCamerasHomography(src_camera, dst_camera, flags=0):
     camera_dst = camera_dst[:, :2]
     camera_src = np.array(camera_src, np.float32)
 
-    hom, mask = cv2.findHomography(camera_src, camera_dst, method=flags)
+    if camera_dst.shape[0] < 4 or camera_src.shape[0] < 4:
+        print("Too few points to compute the homography map between cam")
+        hom = None
+    else:
+        hom, _ = cv2.findHomography(camera_src, camera_dst, method=flags)
     return hom
+
 
 
 # between the two rectified homography(better)
@@ -188,7 +193,7 @@ def computeCamerasUndistortedHomography(src_camera: str, dst_camera: str, mtx: t
     :param dist: Tuple containing the distortion vectors related to the src and dst cameras
     :param new_mtx: Tuple containing the undistorted camera matrix related to the src and dst cameras
     :param flags: Flags for the opencv homography function
-    :return:
+    :return: The homography between the two cameras, None if it doesn't exists
     """
     mtx_src, mtx_dst = mtx
     dist_src, dist_dst = dist
@@ -472,6 +477,29 @@ def load_test_images():
     """
     images = {}
     img_paths = os.listdir('test_images')
+    temp = re.search(r'\d+', i)[0]
     for i in img_paths:
-        images[f"{re.search(r'\d+', i)[0]}"] = cv2.imread(f"test_images/{i}")
+        images[f"{temp}"] = cv2.imread(f"test_images/{i}")
     return images
+
+def to_numpy_array(d):
+    copy = d
+    for key in d:
+        copy[key] = np.array(d[key], dtype=np.float32)
+    return copy
+
+
+def parameters_to_numpy_array(d):
+    result = {}
+    for camera in d:
+        result[camera] = to_numpy_array(d[camera])
+    return result
+
+
+def load_json_parameters():
+    l = [1, 2, 3, 4, 5, 6, 7, 8, 12, 13]
+    d = {}
+    for camera in l:
+        d[f'{camera}'] = LoadJSON(f'json/out{camera}F/{camera}Fcorners_notc.json')
+    return d
+
