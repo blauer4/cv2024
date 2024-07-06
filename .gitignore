@@ -14,10 +14,9 @@ checkboard_test.ipynb
 *.pdf
 appunti
 samples/
-scacchiere/
 videos/
-undistorted/
 *.json
+image.png
 !json/*/*.json
 !measures.json
 

@@ -5,28 +5,6 @@ import argparse
 import sys
 
 
-def to_numpy_array(d):
-    copy = d
-    for key in d:
-        copy[key] = np.array(d[key], dtype=np.float32)
-    return copy
-
-
-def parameters_to_numpy_array(d):
-    result = {}
-    for camera in d:
-        result[camera] = to_numpy_array(d[camera])
-    return result
-
-
-def load_json_parameters():
-    l = [1, 2, 3, 4, 5, 6, 7, 8, 12, 13]
-    d = {}
-    for camera in l:
-        d[f'{camera}'] = util.LoadJSON(f'json/out{camera}F/{camera}Fcorners_notc.json')
-    return d
-
-
 def show_image_grid(imgs, window_name, width, height):
     # Create a grid of images
     grid = cv2.vconcat([cv2.hconcat([imgs[0], imgs[1], imgs[2]]), cv2.hconcat([imgs[3], imgs[4], imgs[5]]),
@@ -74,8 +52,8 @@ def run_camera_mappings(source_camera: str):
     # loading all the images where project the points
     images = util.load_test_images()
     # loading all the intrinsic parameters
-    parameters = load_json_parameters()
-    parameters = parameters_to_numpy_array(parameters)
+    parameters = util.load_json_parameters()
+    parameters = util.parameters_to_numpy_array(parameters)
     # source camera parameters
     s_p = parameters[source_camera]
     source_parameters = (s_p['mtx'], s_p['dist'], s_p['new_mtx'])
@@ -86,7 +64,7 @@ def run_camera_mappings(source_camera: str):
     def mouse_callback(event, x, y, flags, params):
         if event == cv2.EVENT_LBUTTONDOWN:
             h = util.LoadJSON(f'json/out{source_camera}F/homography{source_camera}.json')
-            homography_source = to_numpy_array(h)
+            homography_source = util.to_numpy_array(h)
             img_s = params[0]
             src_parameters = params[1]
             point = np.array([x, y], np.float32)
