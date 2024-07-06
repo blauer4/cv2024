@@ -4,8 +4,6 @@ import numpy as np
 import argparse
 import sys
 
-SCALE = 0.15
-
 
 def to_numpy_array(d):
     copy = d
@@ -43,7 +41,7 @@ def compute_project_point(img, homography, point, source_parameters, dst_paramet
     mtx_src, dist_src, new_mtx_src = source_parameters
     mtx_dst, dist_dst, new_mtx_dst = dst_parameters
     Hsrc = homography
-    print(f'src: {src_point}')
+    # print(f'src: {src_point}')
     src_point = src_point[:2]
     src_point = cv2.undistortPoints(src_point, mtx_src, dist_src, P=new_mtx_src)
     src_point = np.append(src_point, [1])
@@ -62,9 +60,12 @@ def compute_project_point(img, homography, point, source_parameters, dst_paramet
     output = output[0].flatten()
     x2 = int(output[0])
     y2 = int(output[1])
-    print([x2,y2])
-    cv2.putText(img, f'[{x2},{y2}]', (x2, y2), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 3)
-    cv2.circle(img, (x2, y2), 10, (0, 255, 0), -1)
+    # print(f"output: {[x2, y2]}")
+    if x2 < 0 or y2 < 0 or x2 > img.shape[1] or y2 > img.shape[0]:
+        return img, [0, 0]
+    else:
+        cv2.putText(img, f'[{x2},{y2}]', (x2, y2), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 3)
+        cv2.circle(img, (x2, y2), 10, (0, 255, 0), -1)
 
     return img, [x2, y2]
 
@@ -82,7 +83,7 @@ def run_camera_mappings(source_camera: str):
     near, far = util.near_far_cameras(source_camera)
     img_src = images[source_camera]
 
-    def mouseCallback(event, x, y, flags, params):
+    def mouse_callback(event, x, y, flags, params):
         if event == cv2.EVENT_LBUTTONDOWN:
             h = util.LoadJSON(f'json/out{source_camera}F/homography{source_camera}.json')
             homography_source = to_numpy_array(h)
@@ -121,11 +122,10 @@ def run_camera_mappings(source_camera: str):
 
             show_image_grid(all_points_images, 'All cameras', 1920, 1080)
 
-
-    def callbackButton(state, userdata):
+    def callback_button(state, userdata):
         w_name, flag, img_s, src_param = userdata
         if flag.f:
-            cv2.setMouseCallback(w_name, mouseCallback, (img_s, src_param))
+            cv2.setMouseCallback(w_name, mouse_callback, (img_s, src_param))
         else:
             cv2.setMouseCallback(w_name, lambda *args: None)
         flag.change()
@@ -135,7 +135,7 @@ def run_camera_mappings(source_camera: str):
     cv2.namedWindow(main_window, cv2.WINDOW_NORMAL)
     cv2.resizeWindow(main_window, 1280, 720)
     cv2.imshow(main_window, img_src)
-    cv2.createButton('select_pixel', callbackButton, (main_window, flag, img_src, source_parameters))
+    cv2.createButton('select_pixel', callback_button, (main_window, flag, img_src, source_parameters))
 
     # Make opencv wait until esc key is pressed
     key = cv2.waitKey(0)
