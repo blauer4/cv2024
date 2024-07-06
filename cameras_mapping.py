@@ -130,11 +130,13 @@ def computeCamerasUndistortedHomography(src_camera: str, dst_camera: str, mtx, d
 
 
 # load the image you want to visualize
-i1 = cv2.imread('test_images/camera1.png')
-i2 = cv2.imread('test_images/camera2.png')
+source_camera = '1'
+dest_camera = '2'
+i1 = cv2.imread(f'test_images/camera{source_camera}.png')
+i2 = cv2.imread(f'test_images/camera{dest_camera}.png')
 # load the intrinsic parameters
-camera1_params = util.LoadJSON('json/out1F/1Fcorners_notc.json')
-camera2_params = util.LoadJSON('json/out2F/2Fcorners_notc.json')
+camera1_params = util.LoadJSON(f'json/out{source_camera}F/{source_camera}Fcorners_notc.json')
+camera2_params = util.LoadJSON(f'json/out{dest_camera}F/{dest_camera}Fcorners_notc.json')
 
 mtx1 = np.array(camera1_params['mtx'], dtype=np.float32)
 new_mtx1 = np.array(camera1_params['new_mtx'], dtype=np.float32)
@@ -148,8 +150,8 @@ dist2 = np.array(camera2_params['dist'], dtype=np.float32)
 i1_und = cv2.undistort(i1, mtx1, dist1, None, new_mtx1)
 i2_und = cv2.undistort(i2, mtx2, dist2, None, new_mtx2)
 
-h12_und = computeCamerasUndistortedHomography('1', '2', (mtx1, mtx2), (dist1, dist2), (new_mtx1, new_mtx2),
-                                              'homography113')
+h12_und = computeCamerasUndistortedHomography(source_camera, dest_camera, (mtx1, mtx2), (dist1, dist2), (new_mtx1, new_mtx2),
+                                              f'homography{source_camera}_{dest_camera}')
 print(h12_und)
 undistort = (mtx1, dist1, new_mtx1, mtx2, dist2, new_mtx2)
-seeCamerasMapping((i1, i2), ('camera1', 'camera13'), (h12_und, None), undistort)
+seeCamerasMapping((i1, i2), (f'camera{source_camera}', f'camera{dest_camera}'), (h12_und, None), undistort)
