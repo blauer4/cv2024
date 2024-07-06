@@ -125,7 +125,7 @@ def calculate_error(real_world_camera_pos, extrinsic_matrix):
     cam = extrinsic_matrix[:3, 3]
     # Calculate the error
     error = cv2.norm(real_world_camera_pos, cam, cv2.NORM_L2)
-    return error
+    return round(error, 3)
 
 
 def main(arg):
@@ -190,7 +190,8 @@ def main(arg):
 
         # print(f"Camera {camera} extrinsic matrix:")
         # pretty_print_matrix(extrinsic_matrix)
-        print(f"Camera {camera} L2Norm: {calculate_error(all_camera_coordinates[f"camera_{camera.replace('out', '')}"], extrinsic_matrix)}")
+        print(
+            f"Camera {camera} L2Norm: {calculate_error(all_camera_coordinates[f"camera_{camera.replace('out', '')}"], extrinsic_matrix)}")
     size = arg.size if arg.size else 10
     plot_camera(extrinsic_matrices, all_camera_coordinates, size)
 
