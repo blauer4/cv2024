@@ -33,7 +33,6 @@ def show_image_grid(imgs, window_name, width, height):
     # Create a grid of images
     grid = cv2.vconcat([cv2.hconcat([imgs[0], imgs[1], imgs[2]]), cv2.hconcat([imgs[3], imgs[4], imgs[5]]),
                         cv2.hconcat([imgs[6], imgs[7], imgs[8]])])
-    print(grid.shape)
     cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
     cv2.resizeWindow(window_name, width, height)
     cv2.imshow(window_name, grid)
