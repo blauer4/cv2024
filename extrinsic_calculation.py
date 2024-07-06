@@ -130,11 +130,11 @@ def calculate_error(real_world_camera_pos, extrinsic_matrix):
 
 def main(arg):
     # Baseline camera coordinates
-    all_camera_coordinates = {'camera_1': [14.5, 17.7, 6.2], 'camera_2': [0.0, 17.7, 6.2],
-                              'camera_3': [22.0, 10.0, 6.6], 'camera_4': [-14.5, 17.7, 6.2],
-                              'camera_5': [22.0, -10.2, 5.8], 'camera_6': [0.0, -10.0, 6.3],
-                              'camera_7': [-25.0, 0.0, 6.4], 'camera_8': [-22.0, -10.0, 6.3],
-                              'camera_12': [-22.4, 10.0, 6.9], 'camera_13': [22.0, 0.0, 7.0]}
+    all_camera_coordinates = {'camera_1': [15.1, 18.1, 6.2], 'camera_2': [0.0, 18.1, 6.2],
+                              'camera_3': [22.0, 10.2, 6.6], 'camera_4': [-14.8, 18.1, 6.2],
+                              'camera_5': [22.0, -10.2, 5.8], 'camera_6': [0.0, -10.0, 6.35],
+                              'camera_7': [-24.8, 0.0, 6.4], 'camera_8': [-22.0, -10.0, 6.35],
+                              'camera_12': [-22.4, 10.0, 6.9], 'camera_13': [22.0, 0.0, 7.05]}
 
     for x in all_camera_coordinates:
         all_camera_coordinates[x] = np.array(all_camera_coordinates[x], dtype=np.float64)
