@@ -123,15 +123,15 @@ def computeCamerasUndistortedHomography(src_camera: str, dst_camera: str, mtx, d
     camera_dst = cv2.undistortPoints(camera_dst, mtx_dst, dist_dst, P=new_mtx_dst)
 
     Hom, mask = cv2.findHomography(camera_src, camera_dst, method=flags)
-    print(Hom)
+    print(f'Homography: {Hom}')
     if save:
         util.saveToJSONstr({"H": Hom.tolist()}, f'homography{camera_name}')
     return Hom
 
 
 # load the image you want to visualize
-source_camera = '1'
-dest_camera = '2'
+source_camera = '12'
+dest_camera = '6'
 i1 = cv2.imread(f'test_images/camera{source_camera}.png')
 i2 = cv2.imread(f'test_images/camera{dest_camera}.png')
 # load the intrinsic parameters
@@ -145,10 +145,6 @@ dist1 = np.array(camera1_params['dist'], dtype=np.float32)
 mtx2 = np.array(camera2_params['mtx'], dtype=np.float32)
 new_mtx2 = np.array(camera2_params['new_mtx'], dtype=np.float32)
 dist2 = np.array(camera2_params['dist'], dtype=np.float32)
-
-##From camera to undistorted to undistorted to camera
-i1_und = cv2.undistort(i1, mtx1, dist1, None, new_mtx1)
-i2_und = cv2.undistort(i2, mtx2, dist2, None, new_mtx2)
 
 h12_und = computeCamerasUndistortedHomography(source_camera, dest_camera, (mtx1, mtx2), (dist1, dist2), (new_mtx1, new_mtx2),
                                               f'homography{source_camera}_{dest_camera}')

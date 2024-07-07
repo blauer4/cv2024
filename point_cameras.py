@@ -33,8 +33,8 @@ def compute_project_point(img, homography, point, source_parameters, dst_paramet
     und_dst = cv2.undistortPoints(dst_point[:2], new_mtx_dst, np.zeros((1, 5), dtype=np.float32))
     dst_point = cv2.convertPointsToHomogeneous(und_dst)
     output = cv2.projectPoints(dst_point, np.zeros((1, 3), dtype=np.float32),
-                               np.zeros((1, 3), dtype=np.float32), mtx_dst, dist_dst, und_dst)
-
+                                       np.zeros((1, 3), dtype=np.float32), mtx_dst, dist_dst)
+    
     output = output[0].flatten()
     x2 = int(output[0])
     y2 = int(output[1])
@@ -87,6 +87,7 @@ def run_camera_mappings(source_camera: str):
             second_camera = near[-1]
             # taking the projected point from before as a new source point
             point = np.array(near_points[second_camera], dtype=np.float32)
+            #print(f'starting near point: {point}')
             # load all the homographies for computing the remaining cameras
             src_parameters = (parameters[second_camera]['mtx'], parameters[second_camera]['dist'],
                               parameters[second_camera]['new_mtx'])
@@ -115,10 +116,8 @@ def run_camera_mappings(source_camera: str):
     cv2.imshow(main_window, img_src)
     cv2.createButton('select_pixel', callback_button, (main_window, flag, img_src, source_parameters))
 
-    # Make opencv wait until esc key is pressed
-    key = cv2.waitKey(0)
-    if key == 27:
-        cv2.destroyAllWindows()
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
 
 if __name__ == "__main__":

@@ -477,8 +477,8 @@ def load_test_images():
     """
     images = {}
     img_paths = os.listdir('test_images')
-    temp = re.search(r'\d+', i)[0]
     for i in img_paths:
+        temp = re.search(r'\d+', i)[0]
         images[f"{temp}"] = cv2.imread(f"test_images/{i}")
     return images
 
