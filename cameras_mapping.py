@@ -8,7 +8,6 @@ def seeCamerasMapping(img, window_name, homographies, undistort=None):
     Hsrc, Hdst = homographies
     window_name_src, window_name_dst = window_name
     img_src, img_dst = img
-
     # undistort parameters
 
     mtx_src = None
@@ -61,12 +60,15 @@ def seeCamerasMapping(img, window_name, homographies, undistort=None):
             output = output[0].flatten()
             x2 = int(output[0])
             y2 = int(output[1])
-            font = cv2.FONT_HERSHEY_SIMPLEX
-            cv2.putText(img_src, f'[{x},{y}]', (x, y), font, 1, (0, 0, 0), 3)
-            cv2.putText(img_dst, f'[{x2},{y2}]', (x2, y2), font, 1, (0, 0, 0), 3)
+            if x2 < 0 or y2 < 0 or x2 > img_dst.shape[0] or y2> img_dst.shape[1]:
+                print(f'not in range: {x2}, {y2}')
+            else:
+                font = cv2.FONT_HERSHEY_SIMPLEX
+                cv2.putText(img_src, f'[{x},{y}]', (x, y), font, 1, (0, 0, 0), 3)
+                cv2.putText(img_dst, f'[{x2},{y2}]', (x2, y2), font, 1, (0, 0, 0), 3)
 
-            cv2.circle(img_src, (x, y), 5, (0, 255, 0), -1)
-            cv2.circle(img_dst, (x2, y2), 5, (0, 255, 0), -1)
+                cv2.circle(img_src, (x, y), 5, (0, 255, 0), -1)
+                cv2.circle(img_dst, (x2, y2), 5, (0, 255, 0), -1)
 
             cv2.imshow(window_name_src, img_src)
             cv2.imshow(window_name_dst, img_dst)
