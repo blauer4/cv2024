@@ -60,7 +60,8 @@ def seeCamerasMapping(img, window_name, homographies, undistort=None):
             output = output[0].flatten()
             x2 = int(output[0])
             y2 = int(output[1])
-            if x2 < 0 or y2 < 0 or x2 > img_dst.shape[0] or y2> img_dst.shape[1]:
+            print(f'img_dst: {img_dst.shape}')
+            if x2 < 0 or y2 < 0 or x2 > img_dst.shape[1] or y2> img_dst.shape[0]:
                 print(f'not in range: {x2}, {y2}')
             else:
                 font = cv2.FONT_HERSHEY_SIMPLEX
@@ -132,8 +133,8 @@ def computeCamerasUndistortedHomography(src_camera: str, dst_camera: str, mtx, d
 
 
 # load the image you want to visualize
-source_camera = '12'
-dest_camera = '6'
+source_camera = '2'
+dest_camera = '5'
 i1 = cv2.imread(f'test_images/camera{source_camera}.png')
 i2 = cv2.imread(f'test_images/camera{dest_camera}.png')
 # load the intrinsic parameters
