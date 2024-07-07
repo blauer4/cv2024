@@ -2,14 +2,15 @@ import numpy as np
 import cv2
 import os
 import re
+import time
 import datetime as dt
 import lib.util as util
 import lib.Calibration as cal
 
 all_chessboard_sizes = [(5, 7), (5, 7), (5, 7), (5, 7), (6, 9), (6, 9), (5, 7), (6, 9), (6, 9), (0, 0), (6, 9), (5, 7),
                         (5, 7)]
-
-camera_number = "4F"
+start_time = time.time()
+camera_number = "3F"
 VIDEO_NAME = 'out' + camera_number
 # Set the frame skip interval 
 frame_skip = 10
@@ -34,7 +35,7 @@ chessboard_centers = np.array([[]])
 for file in os.listdir(output_dir):
     os.remove(os.path.join(output_dir, file))
 
-relative_path = "videos/"
+relative_path = "../videos/"
 VIDEO_NAME = f'out{camera_number}.mp4'
 video_path = f'{relative_path}{VIDEO_NAME}'
 
@@ -81,4 +82,4 @@ json_camera_matrix = {
 
 util.saveToJSONstr(json_camera_matrix, f"{camera_number}corners_notc")
 
-print("Camera", camera_number, "done!")
+print("Camera", camera_number, "done! Time elapsed:", time.time() - start_time, "seconds")
